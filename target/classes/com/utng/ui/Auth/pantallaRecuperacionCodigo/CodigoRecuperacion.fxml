@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.utng.AuthModule.controller.CodigoRecuperacionController"      
+      alignment="CENTER"
+      spacing="15"
+      prefWidth="400"
+      prefHeight="300">
+
+
+    <padding>
+        <Insets top="30" right="40" bottom="30" left="40"/>
+    </padding>
+
+
+    <Label text="Verificación de código"
+           style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+
+
+    <Label fx:id="lblCorreo"
+           text="Se envió un código al correo:"
+           wrapText="true"
+           alignment="CENTER"/>
+
+
+    <Label text="Ingrese el código de 6 dígitos"/>
+
+
+    <TextField fx:id="txtCodigo"
+               promptText="Código de recuperación"
+               prefWidth="250"
+               maxLength="6"/>
+
+
+    <Label fx:id="lblMensaje"
+           text=""
+           wrapText="true"/>
+
+
+    <Button text="Verificar código"
+            prefWidth="250"
+            onAction="#verificarCodigo"/>
+
+
+</VBox>
