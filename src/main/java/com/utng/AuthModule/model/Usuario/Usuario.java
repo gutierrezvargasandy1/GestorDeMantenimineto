@@ -1,6 +1,8 @@
-package com.utng.AuthModule.model;
+package com.utng.AuthModule.model.Usuario;
 
-import java.time.LocalDateTime;
+
+
+import java.sql.Timestamp;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,15 +14,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Usuario {
 
-    private Integer idUsuario;
+    private Long idUsuario;
     private String nombreCompleto;
     private String apellidoPaterno;
     private String apellidoMaterno;
     private String correo;
     private String password;
     private TipoUsuario tipoUsuario;
-    private Boolean recuperacionActiva;
+    private Integer intentosRecuperacion = 0;
+    private Boolean recuperacionActiva = false;
+    private Timestamp fechaCodigo;
     private String codigoRecuperacion;
-    private LocalDateTime expiracionCodigo;
+    private Timestamp fechaCreacion;
+    private Boolean activo;
 
 }

@@ -1,8 +1,14 @@
+com\utng\AuthModule\repository\AuthRepository.class
 com\utng\App.class
-com\utng\AuthModule\model\TipoUsuario.class
+com\utng\util\EmailService.class
+com\utng\AuthModule\services\AuthService.class
 com\utng\AuthModule\controller\RecuperarPasswordController.class
 com\utng\AuthModule\controller\CodigoRecuperacionController.class
-com\utng\util\Navigator.class
+com\utng\UserModule\UsuarioRepository.class
 com\utng\AuthModule\controller\LoginController.class
 com\utng\config\ConectionDB.class
-com\utng\AuthModule\model\Usuario.class
+com\utng\util\AppException.class
+com\utng\AuthModule\model\Usuario\TipoUsuario.class
+com\utng\util\Navigator.class
+com\utng\util\PasswordUtil.class
+com\utng\AuthModule\model\Usuario\Usuario.class
