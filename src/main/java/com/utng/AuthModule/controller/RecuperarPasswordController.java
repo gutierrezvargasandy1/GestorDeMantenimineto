@@ -18,6 +18,11 @@ public class RecuperarPasswordController {
     private Label lblMensaje;
 
     @FXML
+    private void regresar() {
+        Navigator.navigate("/com/utng/ui/Auth/pantallaLogin/PantallaLogin.fxml");
+    }
+
+    @FXML
     private void recuperarPassword() {
 
         String correo = txtCorreo.getText().trim();
@@ -50,7 +55,6 @@ public class RecuperarPasswordController {
         try {
             boolean res = authService.recuperacionDeCredenciales(correo);
 
-
             if (res == true) {
 
                 lblMensaje.setStyle(
@@ -67,9 +71,8 @@ public class RecuperarPasswordController {
                     controller.setCorreoUsuario(correo);
                 }
 
-                
             } else {
-                lblMensaje.setStyle("Correo no encontrado");
+                lblMensaje.setText("Correo no encontrado");
             }
 
         } catch (AppException e) {

@@ -24,6 +24,7 @@ public class AuthService {
                 System.out.print("Ususario Encontrado con el correo: " + correo);
             } else {
                 System.out.print("usuario No encontrado");
+                return false;
             }
 
             String codioRecuperacion = String.valueOf(random.nextInt(900000) + 100000);

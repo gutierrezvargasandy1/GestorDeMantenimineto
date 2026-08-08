@@ -53,7 +53,7 @@ public class NuevaPasswordController {
             mostrarMensaje("Contraseña actualizada con éxito.", false);
             
             // Redirige al login tras completar el cambio
-            Navigator.navigate("/com/utng/ui/Auth/pantallaLogin/Login.fxml");
+            Navigator.navigate("/com/utng/ui/Auth/pantallaLogin/PantallaLogin.fxml");
         } else {
             mostrarMensaje("Ocurrió un error al actualizar la contraseña.", true);
         }

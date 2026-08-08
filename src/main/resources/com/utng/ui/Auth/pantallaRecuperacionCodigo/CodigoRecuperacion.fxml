@@ -8,42 +8,41 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.utng.AuthModule.controller.CodigoRecuperacionController"      
       alignment="CENTER"
-      spacing="15"
-      prefWidth="400"
-      prefHeight="300">
-
+      spacing="15">
 
     <padding>
-        <Insets top="30" right="40" bottom="30" left="40"/>
+        <Insets top="20" right="40" bottom="30" left="40"/>
     </padding>
 
 
-    <Label text="Verificación de código"
-           style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
 
+    <Label text="Verificación de código"
+           style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
 
     <Label fx:id="lblCorreo"
            text="Se envió un código al correo:"
            wrapText="true"
            alignment="CENTER"/>
 
-
     <Label text="Ingrese el código de 6 dígitos"/>
-
 
     <TextField fx:id="txtCodigo"
                promptText="Código de recuperación"
-               prefWidth="250"/>
-
+               maxWidth="300"
+               prefHeight="35"/>
 
     <Label fx:id="lblMensaje"
            text=""
            wrapText="true"/>
 
-
     <Button text="Verificar código"
-            prefWidth="250"
+            maxWidth="300"
+            prefHeight="35"
             onAction="#verificarCodigo"/>
 
+    <Button text="¿No recibiste el código? Reenviar"
+            maxWidth="300"
+            onAction="#reenviarCodigo"
+            style="-fx-background-color: transparent; -fx-text-fill: #0066cc; -fx-cursor: hand; -fx-underline: true;"/>
 
 </VBox>
