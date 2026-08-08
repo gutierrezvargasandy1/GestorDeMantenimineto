@@ -1,8 +1,7 @@
 package com.utng.AuthModule.services;
 
-import com.utng.AuthModule.model.Usuario.Usuario;
-import com.utng.AuthModule.repository.AuthRepository;
 import com.utng.UserModule.UsuarioRepository;
+import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.AppException;
 import com.utng.util.EmailService;
 import com.utng.util.PasswordUtil;
@@ -11,7 +10,6 @@ import java.security.SecureRandom;
 import java.sql.Timestamp;
 
 public class AuthService {
-    private final AuthRepository authRepository = new AuthRepository();
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private static final SecureRandom random = new SecureRandom();
     private final EmailService emailService = new EmailService();
@@ -19,7 +17,7 @@ public class AuthService {
 
     public boolean recuperacionDeCredenciales(String correo) {
         try {
-            Usuario usuario = authRepository.obtenerPorCorreo(correo);
+            Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
             if (usuario != null) {
                 System.out.print("Ususario Encontrado con el correo: " + correo);
             } else {

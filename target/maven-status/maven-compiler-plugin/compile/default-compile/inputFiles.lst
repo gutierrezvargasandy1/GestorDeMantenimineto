@@ -3,11 +3,10 @@ C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\c
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\LoginController.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\NuevaPasswordController.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\RecuperarPasswordController.java
-C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\model\Usuario\TipoUsuario.java
-C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\model\Usuario\Usuario.java
-C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\repository\AuthRepository.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\services\AuthService.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\config\ConectionDB.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\TipoUsuario.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\Usuario.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\UsuarioRepository.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\AppException.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\EmailService.java

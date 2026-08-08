@@ -7,8 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.utng.AuthModule.model.Usuario.TipoUsuario;
-import com.utng.AuthModule.model.Usuario.Usuario;
+import com.utng.UserModule.model.usuario.TipoUsuario;
+import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.config.ConectionDB;
 import com.utng.util.AppException;
 

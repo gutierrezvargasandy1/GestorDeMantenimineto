@@ -1,4 +1,4 @@
-package com.utng.AuthModule.model.Usuario;
+package com.utng.UserModule.model.usuario;
 
 public enum TipoUsuario {
 
