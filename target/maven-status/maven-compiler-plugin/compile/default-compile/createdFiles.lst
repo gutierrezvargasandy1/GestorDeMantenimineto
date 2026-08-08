@@ -10,5 +10,6 @@ com\utng\config\ConectionDB.class
 com\utng\util\AppException.class
 com\utng\AuthModule\model\Usuario\TipoUsuario.class
 com\utng\util\Navigator.class
+com\utng\AuthModule\controller\NuevaPasswordController.class
 com\utng\util\PasswordUtil.class
 com\utng\AuthModule\model\Usuario\Usuario.class

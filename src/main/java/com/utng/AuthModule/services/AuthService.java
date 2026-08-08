@@ -49,6 +49,9 @@ public class AuthService {
 
         try {
             Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
+            if (usuario == null){
+                System.out.print("Ususario nulo ASSASASASA");
+            }
             if (usuario != null && usuario.getRecuperacionActiva() == true) {
                 System.out.print("Ususario encontrado y en recuperacion");
             }

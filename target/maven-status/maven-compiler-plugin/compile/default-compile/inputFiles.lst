@@ -1,6 +1,7 @@
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\App.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\CodigoRecuperacionController.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\LoginController.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\NuevaPasswordController.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\controller\RecuperarPasswordController.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\model\Usuario\TipoUsuario.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AuthModule\model\Usuario\Usuario.java

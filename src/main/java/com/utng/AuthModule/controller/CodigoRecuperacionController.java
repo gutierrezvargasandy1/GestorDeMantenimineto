@@ -1,128 +1,93 @@
 package com.utng.AuthModule.controller;
 
+import com.utng.AuthModule.services.AuthService;
+import com.utng.util.Navigator;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-
 public class CodigoRecuperacionController {
 
+    private final AuthService authService = new AuthService();
 
     @FXML
     private TextField txtCodigo;
-
-
     @FXML
     private Label lblCorreo;
-
-
     @FXML
     private Label lblMensaje;
-
-
-
     private String correoUsuario;
 
-
-
-    public void setCorreoUsuario(String correo){
-
+    public void setCorreoUsuario(String correo) {
         this.correoUsuario = correo;
 
         lblCorreo.setText(
-            "Se envió un código de 6 dígitos al correo:\n"
-            + correo
-        );
+                "Se envió un código de 6 dígitos al correo:\n"
+                        + correo);
 
     }
-
-
 
     @FXML
-    private void verificarCodigo(){
-
+    private void verificarCodigo() {
 
         String codigo = txtCodigo.getText().trim();
+        System.out.print(correoUsuario);
 
-
-
-        // Validar campo vacío
-        if(codigo.isEmpty()){
+        if (codigo.isEmpty()) {
 
             mostrarError(
-                "Ingrese el código recibido."
-            );
+                    "Ingrese el código recibido.");
 
             return;
         }
 
-
-
-        // Validar que solo sean números
-        if(!codigo.matches("\\d+")){
+        if (!codigo.matches("\\d+")) {
 
             mostrarError(
-                "El código solo debe contener números."
-            );
+                    "El código solo debe contener números.");
 
             return;
         }
 
-
-
-        // Validar longitud
-        if(codigo.length() != 6){
+        if (codigo.length() != 6) {
 
             mostrarError(
-                "El código debe tener 6 dígitos."
-            );
+                    "El código debe tener 6 dígitos.");
 
             return;
         }
 
+        boolean res = authService.confirmarRecuperacion(correoUsuario, codigo);
+        if (res == true) {
+            lblMensaje.setStyle(
+                    "-fx-text-fill: green;");
+
+            lblMensaje.setText(
+                    "Código correcto.");
+
+            NuevaPasswordController controller = Navigator.navigateAndGetController("/com/utng/ui/Auth/pantallaCambioPassword/NuevaPassword.fxml");
+            if(controller != null ){
+                controller.setCorreoUsuario(correoUsuario);
+            }
 
 
-        /*
-            Aquí después:
+            
+        } else {
 
-            UsuarioDAO
-
-            Buscar usuario por correo
-
-            Comparar:
-
-            codigoRecuperacion
-
-            Validar:
-
-            expiracionCodigo
-
-        */
-
-
-
-        lblMensaje.setStyle(
-            "-fx-text-fill: green;"
-        );
-
-
-        lblMensaje.setText(
-            "Código correcto."
-        );
+            lblMensaje.setText(
+                    "Código incorrecto o vencido.");
+        }
 
     }
 
-
-
-    private void mostrarError(String mensaje){
+    private void mostrarError(String mensaje) {
 
         lblMensaje.setStyle(
-            "-fx-text-fill: red;"
-        );
+                "-fx-text-fill: red;");
 
         lblMensaje.setText(
-            mensaje
-        );
+                mensaje);
 
     }
 

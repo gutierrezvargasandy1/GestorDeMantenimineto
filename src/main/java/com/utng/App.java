@@ -22,7 +22,7 @@ public class App extends Application {
         //authService.recuperacionDeCredenciales("androoz706@gmail.com");
         // authService.confirmarRecuperacion("androoz706@gmail.com", "983385");
       //authService.cambiaPasword("androoz706@gmail.com", "Hola");
-      authService.login("androoz706@gmail.com", "Hola");
+      //authService.login("androoz706@gmail.com", "Hola");
 
     }
 

@@ -33,8 +33,7 @@
 
     <TextField fx:id="txtCodigo"
                promptText="Código de recuperación"
-               prefWidth="250"
-               maxLength="6"/>
+               prefWidth="250"/>
 
 
     <Label fx:id="lblMensaje"
