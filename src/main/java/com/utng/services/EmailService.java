@@ -1,8 +1,10 @@
-package com.utng.util;
+package com.utng.services;
 
 import java.util.Properties;
 
 import org.eclipse.angus.mail.smtp.SMTPTransport;
+
+import com.utng.util.AppException;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.mail.Message;

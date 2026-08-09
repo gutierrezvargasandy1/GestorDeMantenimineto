@@ -2,8 +2,8 @@ package com.utng.AuthModule.services;
 
 import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.Usuario;
+import com.utng.services.EmailService;
 import com.utng.util.AppException;
-import com.utng.util.EmailService;
 import com.utng.util.PasswordUtil;
 
 import java.security.SecureRandom;

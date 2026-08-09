@@ -37,6 +37,7 @@ public class LoginController {
         if (res) {
             lblMensaje.setStyle("-fx-text-fill:green;");
             lblMensaje.setText("Inicio correcto.");
+            Navigator.navigate("/com/utng/ui/pantallaDashboard/PantallaDashboard.fxml");
         } else {
             lblMensaje.setStyle("-fx-text-fill:red;");
             lblMensaje.setText("Credenciales Incorrectas");
