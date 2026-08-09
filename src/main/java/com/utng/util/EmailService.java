@@ -44,6 +44,7 @@ public class EmailService {
 
             propiedades.put("mail.smtp.auth", "true");
             propiedades.put("mail.smtp.starttls.enable", "true");
+            propiedades.put("mail.smtp.ssl.trust", host);
 
             Session session = Session.getInstance(propiedades);
 
