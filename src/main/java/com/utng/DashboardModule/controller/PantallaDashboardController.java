@@ -7,8 +7,8 @@ import com.utng.DashboardModule.model.MantenimientoModel;
 import com.utng.config.OllamaConfig;
 import com.utng.util.AppException;
 import com.utng.util.MarkdownRenderer;
+import com.utng.util.Navigator;
 
-import javafx.animation.PauseTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -40,9 +40,8 @@ import java.util.Locale;
 
 public class PantallaDashboardController {
     private final OllamaService ollamaService = new OllamaService();
-    MaintenanceContextRepository repo = new MaintenanceContextRepository();
-    private final PromptContextBuilder contextBuilder = new PromptContextBuilder(repo); 
-
+    private final MaintenanceContextRepository repo = new MaintenanceContextRepository();
+    private final PromptContextBuilder contextBuilder = new PromptContextBuilder(repo);
 
     // ============================================================
     // ENCABEZADO
@@ -315,8 +314,8 @@ public class PantallaDashboardController {
     @FXML
     private void irAUsuarios() {
         toggleMenu();
-        // aquí tu lógica para cambiar de pantalla, por ejemplo:
-        // App.setRoot("PantallaUsuarios");
+        Navigator.navigate("/com/utng/ui/usuarioModules/pantallaUsuarios/PantallaUsuarios.fxml");
+
     }
 
     // ============================================================
