@@ -8,6 +8,7 @@ import com.utng.DashboardModule.repository.MantenimientoRepository;
 import com.utng.config.OllamaConfig;
 import com.utng.util.AppException;
 import com.utng.util.MarkdownRenderer;
+import com.utng.util.Navigator;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -406,7 +407,7 @@ public class PantallaDashboardController {
     @FXML
     private void irAUsuarios() {
         toggleMenu();
-        // TODO: App.setRoot("PantallaUsuarios");
+        Navigator.navigate("/com/utng/ui/Usuarios/pantallaUsuarios/PantallaUsuarios.fxml");
     }
 
     // ============================================================
