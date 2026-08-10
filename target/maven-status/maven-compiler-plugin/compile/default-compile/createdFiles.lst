@@ -10,6 +10,7 @@ com\utng\DashboardModule\controller\PantallaDashboardController$2.class
 com\utng\AiModule\OllamaModels$GenerateRequest.class
 com\utng\AiModule\data\MaintenanceContextRepository.class
 com\utng\services\EmailService.class
+com\utng\DashboardModule\repository\MantenimientoRepository.class
 com\utng\AuthModule\controller\NuevaPasswordController.class
 com\utng\util\MarkdownRenderer.class
 com\utng\util\PasswordUtil.class
