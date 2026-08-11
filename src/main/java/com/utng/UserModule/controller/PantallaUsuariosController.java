@@ -156,6 +156,12 @@ public class PantallaUsuariosController {
     @FXML
     private VBox panelMenu;
 
+    @FXML
+    private void irAEquipos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
+    }
+
     // ============================================================
     // DATOS EN MEMORIA
     // ============================================================

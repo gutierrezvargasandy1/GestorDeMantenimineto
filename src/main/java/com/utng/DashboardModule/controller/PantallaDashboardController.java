@@ -22,8 +22,11 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
@@ -34,11 +37,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Modality;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Optional;
 
 public class PantallaDashboardController {
 
@@ -49,59 +54,88 @@ public class PantallaDashboardController {
     // ============================================================
     // ENCABEZADO
     // ============================================================
-    @FXML private Label lblFechaHoy;
+    @FXML
+    private Label lblFechaHoy;
 
     // ============================================================
     // TARJETAS KPI
     // ============================================================
-    @FXML private Label lblTotalEquipos;
-    @FXML private Label lblEquiposActivos;
-    @FXML private Label lblEnMantenimiento;
-    @FXML private Label lblEquiposBaja;
+    @FXML
+    private Label lblTotalEquipos;
+    @FXML
+    private Label lblEquiposActivos;
+    @FXML
+    private Label lblEnMantenimiento;
+    @FXML
+    private Label lblEquiposBaja;
 
     // ============================================================
     // CHIPS DE ESTADO - Labels de conteo
     // ============================================================
-    @FXML private Label lblEstadoActivos;
-    @FXML private Label lblEstadoMantenimiento;
-    @FXML private Label lblEstadoInactivos;
-    @FXML private Label lblEstadoBaja;
+    @FXML
+    private Label lblEstadoActivos;
+    @FXML
+    private Label lblEstadoMantenimiento;
+    @FXML
+    private Label lblEstadoInactivos;
+    @FXML
+    private Label lblEstadoBaja;
 
     // ============================================================
     // CHIPS DE ESTADO - Nodos clickeables (NECESARIO para filtros)
     // ============================================================
-    @FXML private Button chipTodos;        // Button con onAction
-    @FXML private HBox   chipActivos;      // HBox con onMouseClicked
-    @FXML private HBox   chipMantenimiento;// HBox con onMouseClicked
-    @FXML private HBox   chipInactivos;    // HBox con onMouseClicked
-    @FXML private HBox   chipBaja;         // HBox con onMouseClicked
+    @FXML
+    private Button chipTodos; // Button con onAction
+    @FXML
+    private HBox chipActivos; // HBox con onMouseClicked
+    @FXML
+    private HBox chipMantenimiento;// HBox con onMouseClicked
+    @FXML
+    private HBox chipInactivos; // HBox con onMouseClicked
+    @FXML
+    private HBox chipBaja; // HBox con onMouseClicked
 
     // ============================================================
     // FILTROS Y TABLA
     // ============================================================
-    @FXML private TextField txtBuscar;
-    @FXML private ComboBox<String> cmbTipo;
-    @FXML private TableView<MantenimientoModel> tablaMantenimientos;
-    @FXML private TableColumn<MantenimientoModel, String> colEquipo;
-    @FXML private TableColumn<MantenimientoModel, String> colUsuario;
-    @FXML private TableColumn<MantenimientoModel, String> colTipo;
-    @FXML private TableColumn<MantenimientoModel, String> colMotivo;
-    @FXML private TableColumn<MantenimientoModel, String> colTecnico;
-    @FXML private TableColumn<MantenimientoModel, String> colFecha;
-    @FXML private TableColumn<MantenimientoModel, String> colEstado;
+    @FXML
+    private TextField txtBuscar;
+    @FXML
+    private ComboBox<String> cmbTipo;
+    @FXML
+    private TableView<MantenimientoModel> tablaMantenimientos;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colEquipo;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colUsuario;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colTipo;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colMotivo;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colTecnico;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colFecha;
+    @FXML
+    private TableColumn<MantenimientoModel, String> colEstado;
 
     // ============================================================
     // MENU LATERAL
     // ============================================================
-    @FXML private Region overlayMenu;
-    @FXML private VBox   panelMenu;
+    @FXML
+    private Region overlayMenu;
+    @FXML
+    private VBox panelMenu;
 
     // ============================================================
     // ASISTENTE IA
     // ============================================================
-    @FXML private ScrollPane scrollChat;
-    @FXML private VBox       contenedorChat;
-    @FXML private TextField  txtPregunta;
+    @FXML
+    private ScrollPane scrollChat;
+    @FXML
+    private VBox contenedorChat;
+    @FXML
+    private TextField txtPregunta;
 
     // ============================================================
     // DATOS EN MEMORIA
@@ -110,10 +144,10 @@ public class PantallaDashboardController {
     private FilteredList<MantenimientoModel> datosFiltrados;
     private String estadoFiltro = "TODOS";
 
-    private static final String BIENVENIDA =
-        "Hola Gerardo! Soy tu asistente del CGTI. Puedo consultar el historial de un " +
-        "equipo, contar mantenimientos preventivos y correctivos del mes o resumir los " +
-        "servicios por tecnico. Que necesitas?";
+    private static final String BIENVENIDA = "Hola Gerardo! Soy tu asistente del CGTI. Puedo consultar el historial de un "
+            +
+            "equipo, contar mantenimientos preventivos y correctivos del mes o resumir los " +
+            "servicios por tecnico. Que necesitas?";
 
     // ============================================================
     // INICIALIZACION
@@ -123,7 +157,7 @@ public class PantallaDashboardController {
         configurarFecha();
         configurarTablaMantenimientos();
         configurarFiltros();
-        configurarChips();          // <-- CLAVE: asigna userData a cada chip
+        configurarChips(); // <-- CLAVE: asigna userData a cada chip
         cargarDatosDesdeBaseDatos();
         cargarEstadisticas();
         configurarChat();
@@ -153,10 +187,14 @@ public class PantallaDashboardController {
         // Badge de color para Estado
         colEstado.setCellFactory(col -> new TableCell<MantenimientoModel, String>() {
             private final Label chip = new Label();
+
             @Override
             protected void updateItem(String estado, boolean vacio) {
                 super.updateItem(estado, vacio);
-                if (vacio || estado == null) { setGraphic(null); return; }
+                if (vacio || estado == null) {
+                    setGraphic(null);
+                    return;
+                }
                 chip.setText(estado);
                 chip.setStyle(estiloBadge(estado));
                 setGraphic(chip);
@@ -184,8 +222,7 @@ public class PantallaDashboardController {
 
         tablaMantenimientos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tablaMantenimientos.setRowFactory(tv -> {
-            javafx.scene.control.TableRow<MantenimientoModel> fila =
-                new javafx.scene.control.TableRow<>();
+            javafx.scene.control.TableRow<MantenimientoModel> fila = new javafx.scene.control.TableRow<>();
             fila.setPrefHeight(40);
             return fila;
         });
@@ -193,7 +230,7 @@ public class PantallaDashboardController {
 
     private String estiloBadge(String estado) {
         String base = "-fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 20; " +
-                      "-fx-padding: 4 11 4 11; ";
+                "-fx-padding: 4 11 4 11; ";
         if (estado.equalsIgnoreCase("Activo"))
             return base + "-fx-background-color: #dcfce7; -fx-text-fill: #15803d;";
         if (estado.equalsIgnoreCase("En mantenimiento"))
@@ -208,8 +245,8 @@ public class PantallaDashboardController {
     // ============================================================
     private void configurarFiltros() {
         cmbTipo.getItems().addAll(
-            "Todos los tipos", "Preventivo", "Correctivo",
-            "Instalacion de software", "Configuracion");
+                "Todos los tipos", "Preventivo", "Correctivo",
+                "Instalacion de software", "Configuracion");
         cmbTipo.getSelectionModel().selectFirst();
 
         datosFiltrados = new FilteredList<>(datos, m -> true);
@@ -244,7 +281,8 @@ public class PantallaDashboardController {
     @FXML
     private void filtrarPorEstado(Event e) {
         Object origen = e.getSource();
-        if (!(origen instanceof Node)) return;
+        if (!(origen instanceof Node))
+            return;
 
         Node chipClicked = (Node) origen;
         Object userData = chipClicked.getUserData();
@@ -275,25 +313,26 @@ public class PantallaDashboardController {
 
     private void aplicarFiltros() {
         final String q = (txtBuscar.getText() == null)
-            ? "" : txtBuscar.getText().trim().toLowerCase();
+                ? ""
+                : txtBuscar.getText().trim().toLowerCase();
         final String tipo = cmbTipo.getValue();
 
         datosFiltrados.setPredicate(m -> {
             // Filtro de texto: busca en equipo, usuario, tecnico, motivo
             boolean texto = q.isEmpty()
-                || m.getEquipo().toLowerCase().contains(q)
-                || m.getUsuario().toLowerCase().contains(q)
-                || m.getTecnico().toLowerCase().contains(q)
-                || m.getMotivo().toLowerCase().contains(q);
+                    || m.getEquipo().toLowerCase().contains(q)
+                    || m.getUsuario().toLowerCase().contains(q)
+                    || m.getTecnico().toLowerCase().contains(q)
+                    || m.getMotivo().toLowerCase().contains(q);
 
             // Filtro por tipo del ComboBox
             boolean porTipo = tipo == null
-                || tipo.startsWith("Todos")
-                || m.getTipo().equalsIgnoreCase(tipo);
+                    || tipo.startsWith("Todos")
+                    || m.getTipo().equalsIgnoreCase(tipo);
 
             // Filtro por estado del chip
             boolean porEstado = "TODOS".equals(estadoFiltro)
-                || m.getEstado().equalsIgnoreCase(estadoFiltro);
+                    || m.getEstado().equalsIgnoreCase(estadoFiltro);
 
             return texto && porTipo && porEstado;
         });
@@ -323,21 +362,21 @@ public class PantallaDashboardController {
 
     private void cargarDatosDemo() {
         datos.setAll(
-            new MantenimientoModel("PC-LAB-014", "Ana Ramirez", "Preventivo",
-                "Limpieza interna y cambio de pasta termica", "Luis Ortega", "12/08/2026", "Activo"),
-            new MantenimientoModel("PC-ADM-003", "Jorge Medina", "Correctivo",
-                "No enciende, se sospecha de fuente", "Karla Nunez", "13/08/2026", "En mantenimiento"),
-            new MantenimientoModel("LAP-DOC-021", "Mtra. Beltran", "Instalacion de software",
-                "Instalacion de MATLAB y actualizacion de SO", "Luis Ortega", "14/08/2026", "Activo"),
-            new MantenimientoModel("PC-BIB-008", "Biblioteca", "Preventivo",
-                "Revision de disco y desfragmentacion", "Diego Salas", "17/08/2026", "Activo"),
-            new MantenimientoModel("PC-LAB-002", "Lab. Redes", "Correctivo",
-                "Pantalla sin senal, cambio de tarjeta de video", "Karla Nunez", "18/08/2026", "En mantenimiento"),
-            new MantenimientoModel("PC-ADM-011", "Control Escolar", "Preventivo",
-                "Respaldo de informacion y limpieza", "Diego Salas", "20/08/2026", "Inactivo"),
-            new MantenimientoModel("PC-LAB-030", "Lab. Software", "Correctivo",
-                "Equipo obsoleto, se propone baja", "Luis Ortega", "21/08/2026", "De baja")
-        );
+                new MantenimientoModel("PC-LAB-014", "Ana Ramirez", "Preventivo",
+                        "Limpieza interna y cambio de pasta termica", "Luis Ortega", "12/08/2026", "Activo"),
+                new MantenimientoModel("PC-ADM-003", "Jorge Medina", "Correctivo",
+                        "No enciende, se sospecha de fuente", "Karla Nunez", "13/08/2026", "En mantenimiento"),
+                new MantenimientoModel("LAP-DOC-021", "Mtra. Beltran", "Instalacion de software",
+                        "Instalacion de MATLAB y actualizacion de SO", "Luis Ortega", "14/08/2026", "Activo"),
+                new MantenimientoModel("PC-BIB-008", "Biblioteca", "Preventivo",
+                        "Revision de disco y desfragmentacion", "Diego Salas", "17/08/2026", "Activo"),
+                new MantenimientoModel("PC-LAB-002", "Lab. Redes", "Correctivo",
+                        "Pantalla sin senal, cambio de tarjeta de video", "Karla Nunez", "18/08/2026",
+                        "En mantenimiento"),
+                new MantenimientoModel("PC-ADM-011", "Control Escolar", "Preventivo",
+                        "Respaldo de informacion y limpieza", "Diego Salas", "20/08/2026", "Inactivo"),
+                new MantenimientoModel("PC-LAB-030", "Lab. Software", "Correctivo",
+                        "Equipo obsoleto, se propone baja", "Luis Ortega", "21/08/2026", "De baja"));
         System.out.println("Datos de demostracion cargados: " + datos.size());
     }
 
@@ -368,11 +407,11 @@ public class PantallaDashboardController {
     }
 
     private void cargarEstadisticasLocal() {
-        long total    = datos.stream().map(MantenimientoModel::getEquipo).distinct().count();
-        long activos  = contarPorEstado("Activo");
-        long enMant   = contarPorEstado("En mantenimiento");
-        long inactivos= contarPorEstado("Inactivo");
-        long deBaja   = contarPorEstado("De baja");
+        long total = datos.stream().map(MantenimientoModel::getEquipo).distinct().count();
+        long activos = contarPorEstado("Activo");
+        long enMant = contarPorEstado("En mantenimiento");
+        long inactivos = contarPorEstado("Inactivo");
+        long deBaja = contarPorEstado("De baja");
 
         Platform.runLater(() -> {
             lblTotalEquipos.setText(String.valueOf(total));
@@ -402,12 +441,49 @@ public class PantallaDashboardController {
         overlayMenu.setManaged(!abierto);
     }
 
-    @FXML private void irADashboard() { toggleMenu(); }
+    @FXML
+    private void irADashboard() {
+        toggleMenu();
+    }
 
     @FXML
     private void irAUsuarios() {
         toggleMenu();
-        Navigator.navigate("/com/utng/ui/Usuarios/pantallaUsuarios/PantallaUsuarios.fxml");
+        Navigator.navigate("/com/utng/ui/usuarioModules/pantallaUsuarios/PantallaUsuarios.fxml");
+    }
+
+    @FXML
+    private void irAEquipos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
+    }
+
+    @FXML
+    private void cerrarSesion() {
+        boolean confirmado = confirmar("Cerrar sesión",
+                "¿Deseas salir del sistema?",
+                "Se cerrará la sesión actual y volverás a la pantalla de inicio.");
+
+        if (confirmado) {
+            Navigator.navigate("/com/utng/ui/Auth/pantallaLogin/PantallaLogin.fxml");
+        }
+    }
+
+    private boolean confirmar(String titulo, String encabezado, String detalle) {
+        Alert alerta = new Alert(Alert.AlertType.CONFIRMATION);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(encabezado);
+        alerta.setContentText(detalle);
+        alerta.getDialogPane().setMinWidth(480);
+        prepararVentana(alerta);
+
+        Optional<ButtonType> respuesta = alerta.showAndWait();
+        return respuesta.isPresent() && respuesta.get() == ButtonType.OK;
+    }
+
+    private void prepararVentana(Dialog<?> dialogo) {
+
+        dialogo.initModality(Modality.WINDOW_MODAL);
     }
 
     // ============================================================
@@ -422,7 +498,8 @@ public class PantallaDashboardController {
     @FXML
     private void enviarPregunta() {
         String pregunta = txtPregunta.getText().trim();
-        if (pregunta.isEmpty()) return;
+        if (pregunta.isEmpty())
+            return;
 
         agregarMensajeUsuario(pregunta);
         txtPregunta.clear();
@@ -433,7 +510,8 @@ public class PantallaDashboardController {
                 String contexto;
                 try {
                     contexto = OllamaConfig.ragEnabled()
-                        ? contextBuilder.buildContext(pregunta) : "";
+                            ? contextBuilder.buildContext(pregunta)
+                            : "";
                 } catch (AppException ex) {
                     contexto = "No se pudo consultar la BD: " + ex.getMessage();
                 }
@@ -472,7 +550,7 @@ public class PantallaDashboardController {
             long n = datos.stream().filter(m -> m.getTipo().equalsIgnoreCase("Preventivo")).count();
             if (!datos.isEmpty())
                 return "Hay " + n + " preventivos. El mas proximo es " +
-                    datos.get(0).getEquipo() + " el " + datos.get(0).getFecha() + ".";
+                        datos.get(0).getEquipo() + " el " + datos.get(0).getFecha() + ".";
             return "Hay " + n + " mantenimientos preventivos.";
         }
         if (p.contains("tecnico")) {
@@ -480,9 +558,9 @@ public class PantallaDashboardController {
         }
         if (p.contains("reporte") || p.contains("mes")) {
             return "Resumen: " + lblTotalEquipos.getText() + " equipos, " +
-                lblEquiposActivos.getText() + " activos, " +
-                lblEnMantenimiento.getText() + " en mantenimiento, " +
-                lblEquiposBaja.getText() + " de baja.";
+                    lblEquiposActivos.getText() + " activos, " +
+                    lblEnMantenimiento.getText() + " en mantenimiento, " +
+                    lblEquiposBaja.getText() + " de baja.";
         }
         return "Prueba con: reporte del mes, servicios por tecnico, mantenimientos correctivos.";
     }
@@ -505,13 +583,13 @@ public class PantallaDashboardController {
 
         Label avatar = new Label("IA");
         avatar.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: white; " +
-            "-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1); " +
-            "-fx-background-radius: 14; -fx-min-width: 28; -fx-min-height: 28; -fx-alignment: center;");
+                "-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1); " +
+                "-fx-background-radius: 14; -fx-min-width: 28; -fx-min-height: 28; -fx-alignment: center;");
 
         TextFlow contenido = MarkdownRenderer.render(textoMarkdown, 11.5, "#334155");
         contenido.setMaxWidth(600);
         contenido.setStyle("-fx-background-color: white; -fx-background-radius: 10 10 10 2; " +
-            "-fx-padding: 10 13 10 13; -fx-border-color: #e8ecf2; -fx-border-radius: 10 10 10 2;");
+                "-fx-padding: 10 13 10 13; -fx-border-color: #e8ecf2; -fx-border-radius: 10 10 10 2;");
 
         burbuja.getChildren().addAll(avatar, contenido);
         contenedorChat.getChildren().add(burbuja);
@@ -524,13 +602,13 @@ public class PantallaDashboardController {
         burbuja.setWrapText(true);
         burbuja.setMaxWidth(620);
         burbuja.setStyle("-fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);" +
-            "-fx-background-radius: 12 12 2 12; -fx-padding: 12 15 12 15;" +
-            "-fx-font-size: 12.5px; -fx-text-fill: white;");
+                "-fx-background-radius: 12 12 2 12; -fx-padding: 12 15 12 15;" +
+                "-fx-font-size: 12.5px; -fx-text-fill: white;");
 
         Label avatar = new Label("GE");
         avatar.setStyle("-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: #475569;" +
-            "-fx-background-color: #e2e8f0; -fx-background-radius: 16;" +
-            "-fx-min-width: 32; -fx-min-height: 32; -fx-alignment: center;");
+                "-fx-background-color: #e2e8f0; -fx-background-radius: 16;" +
+                "-fx-min-width: 32; -fx-min-height: 32; -fx-alignment: center;");
 
         HBox fila = new HBox(10, burbuja, avatar);
         fila.setAlignment(Pos.TOP_RIGHT);

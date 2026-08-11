@@ -42,8 +42,8 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== LISTA COMPLETA DE EQUIPOS ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             int count = 0;
             while (rs.next()) {
@@ -57,7 +57,7 @@ public class MaintenanceContextRepository {
                 sb.append("  Almacenamiento: ").append(rs.getString("almacenamiento")).append("\n");
                 sb.append("  Anio         : ").append(rs.getInt("anio_creacion")).append("\n");
                 sb.append("  Sistema OS   : ").append(rs.getString("so_nombre"))
-                  .append(" ").append(rs.getString("so_version")).append("\n");
+                        .append(" ").append(rs.getString("so_version")).append("\n");
                 sb.append("  Responsable  : ").append(rs.getString("responsable")).append("\n");
             }
 
@@ -86,22 +86,22 @@ public class MaintenanceContextRepository {
                 """;
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) {
                 return String.format(
-                    "=== RESUMEN GENERAL ===\n" +
-                    "Total equipos      : %d\n" +
-                    "Activos            : %d\n" +
-                    "En mantenimiento   : %d\n" +
-                    "De baja            : %d\n" +
-                    "Inactivos          : %d\n",
-                    rs.getInt("total"),
-                    rs.getInt("activos"),
-                    rs.getInt("en_mantenimiento"),
-                    rs.getInt("de_baja"),
-                    rs.getInt("inactivos"));
+                        "=== RESUMEN GENERAL ===\n" +
+                                "Total equipos      : %d\n" +
+                                "Activos            : %d\n" +
+                                "En mantenimiento   : %d\n" +
+                                "De baja            : %d\n" +
+                                "Inactivos          : %d\n",
+                        rs.getInt("total"),
+                        rs.getInt("activos"),
+                        rs.getInt("en_mantenimiento"),
+                        rs.getInt("de_baja"),
+                        rs.getInt("inactivos"));
             }
 
             return "Sin datos de equipos.";
@@ -136,7 +136,7 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== REGISTROS DE MANTENIMIENTO ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, limit);
 
@@ -146,7 +146,7 @@ public class MaintenanceContextRepository {
                     count++;
                     sb.append("\n[Mantenimiento #").append(rs.getInt("id")).append("]\n");
                     sb.append("  Equipo        : ").append(rs.getString("modelo"))
-                      .append(" — ").append(rs.getString("lugar")).append("\n");
+                            .append(" — ").append(rs.getString("lugar")).append("\n");
                     sb.append("  Tipo          : ").append(mapearTipo(rs.getString("tipo"))).append("\n");
                     sb.append("  Motivo        : ").append(rs.getString("motivo")).append("\n");
                     sb.append("  Fecha         : ").append(rs.getTimestamp("fecha")).append("\n");
@@ -155,7 +155,8 @@ public class MaintenanceContextRepository {
                         sb.append("  Proxima fecha : ").append(rs.getTimestamp("fecha_proxima")).append("\n");
                     }
 
-                    sb.append("  Realizado     : ").append(rs.getBoolean("mantenimiento_realizado") ? "Si" : "No").append("\n");
+                    sb.append("  Realizado     : ").append(rs.getBoolean("mantenimiento_realizado") ? "Si" : "No")
+                            .append("\n");
                     sb.append("  Estado equipo : ").append(mapearEstado(rs.getString("estado_equipo"))).append("\n");
                 }
 
@@ -209,7 +210,7 @@ public class MaintenanceContextRepository {
         String like = "%" + busqueda + "%";
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement psEq = con.prepareStatement(sqlEquipos)) {
+                PreparedStatement psEq = con.prepareStatement(sqlEquipos)) {
 
             psEq.setString(1, like);
             psEq.setString(2, like);
@@ -238,16 +239,17 @@ public class MaintenanceContextRepository {
                             while (rsM.next()) {
                                 hayM = true;
                                 sb.append("  ").append(rsM.getTimestamp("fecha"))
-                                  .append(" | ").append(mapearTipo(rsM.getString("tipo")))
-                                  .append(" | ").append(rsM.getString("motivo"));
+                                        .append(" | ").append(mapearTipo(rsM.getString("tipo")))
+                                        .append(" | ").append(rsM.getString("motivo"));
                                 if (rsM.getTimestamp("fecha_proxima") != null) {
                                     sb.append(" | Proxima: ").append(rsM.getTimestamp("fecha_proxima"));
                                 }
                                 sb.append(" | Realizado: ")
-                                  .append(rsM.getBoolean("mantenimiento_realizado") ? "Si" : "Pendiente")
-                                  .append("\n");
+                                        .append(rsM.getBoolean("mantenimiento_realizado") ? "Si" : "Pendiente")
+                                        .append("\n");
                             }
-                            if (!hayM) sb.append("  (sin mantenimientos registrados)\n");
+                            if (!hayM)
+                                sb.append("  (sin mantenimientos registrados)\n");
                         }
                     }
 
@@ -261,13 +263,14 @@ public class MaintenanceContextRepository {
                             while (rsA.next()) {
                                 hayA = true;
                                 sb.append("  ").append(rsA.getTimestamp("fecha"))
-                                  .append(" | ").append(rsA.getString("tipo"))
-                                  .append(" | ").append(rsA.getString("nombre_actualizado"))
-                                  .append(": v").append(rsA.getString("version_actual"))
-                                  .append(" -> v").append(rsA.getString("version_actualizada"))
-                                  .append("\n");
+                                        .append(" | ").append(rsA.getString("tipo"))
+                                        .append(" | ").append(rsA.getString("nombre_actualizado"))
+                                        .append(": v").append(rsA.getString("version_actual"))
+                                        .append(" -> v").append(rsA.getString("version_actualizada"))
+                                        .append("\n");
                             }
-                            if (!hayA) sb.append("  (sin actualizaciones registradas)\n");
+                            if (!hayA)
+                                sb.append("  (sin actualizaciones registradas)\n");
                         }
                     }
 
@@ -280,10 +283,11 @@ public class MaintenanceContextRepository {
                             while (rsP.next()) {
                                 hayP = true;
                                 sb.append("  - ").append(rsP.getString("nombre"))
-                                  .append(" v").append(rsP.getString("version_actual"))
-                                  .append("\n");
+                                        .append(" v").append(rsP.getString("version_actual"))
+                                        .append("\n");
                             }
-                            if (!hayP) sb.append("  (sin programas registrados)\n");
+                            if (!hayP)
+                                sb.append("  (sin programas registrados)\n");
                         }
                     }
 
@@ -329,36 +333,38 @@ public class MaintenanceContextRepository {
 
             // Resumen por tipo
             try (PreparedStatement ps = con.prepareStatement(sqlTipos);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
 
                 sb.append("Resumen por tipo:\n");
                 boolean hayDatos = false;
                 while (rs.next()) {
                     hayDatos = true;
                     sb.append("  - ").append(mapearTipo(rs.getString("tipo")))
-                      .append(": ").append(rs.getInt("total")).append("\n");
+                            .append(": ").append(rs.getInt("total")).append("\n");
                 }
-                if (!hayDatos) sb.append("  (Sin mantenimientos este mes)\n");
+                if (!hayDatos)
+                    sb.append("  (Sin mantenimientos este mes)\n");
             }
 
             sb.append("\nDetalle de registros:\n");
 
             // Detalle completo
             try (PreparedStatement ps = con.prepareStatement(sqlDetalle);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
 
                 boolean hayDatos = false;
                 while (rs.next()) {
                     hayDatos = true;
                     sb.append("  [").append(rs.getTimestamp("fecha")).append("] ")
-                      .append(mapearTipo(rs.getString("tipo")))
-                      .append(" — ").append(rs.getString("modelo"))
-                      .append(" (").append(rs.getString("lugar")).append(")")
-                      .append(" | ").append(rs.getString("motivo"))
-                      .append(" | ").append(rs.getBoolean("mantenimiento_realizado") ? "Realizado" : "Pendiente")
-                      .append("\n");
+                            .append(mapearTipo(rs.getString("tipo")))
+                            .append(" — ").append(rs.getString("modelo"))
+                            .append(" (").append(rs.getString("lugar")).append(")")
+                            .append(" | ").append(rs.getString("motivo"))
+                            .append(" | ").append(rs.getBoolean("mantenimiento_realizado") ? "Realizado" : "Pendiente")
+                            .append("\n");
                 }
-                if (!hayDatos) sb.append("  (Sin registros detallados este mes)\n");
+                if (!hayDatos)
+                    sb.append("  (Sin registros detallados este mes)\n");
             }
 
         } catch (SQLException e) {
@@ -393,13 +399,13 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== USUARIOS DEL SISTEMA ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 sb.append("\n[Usuario #").append(rs.getInt("id")).append("]\n");
                 sb.append("  Nombre   : ").append(rs.getString("nombre_completo"))
-                  .append(" ").append(rs.getString("apellido_paterno")).append("\n");
+                        .append(" ").append(rs.getString("apellido_paterno")).append("\n");
                 sb.append("  Correo   : ").append(rs.getString("correo")).append("\n");
                 sb.append("  Rol      : ").append(rs.getString("rol")).append("\n");
                 sb.append("  Activo   : ").append(rs.getBoolean("activo") ? "Si" : "No").append("\n");
@@ -438,7 +444,7 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== SERVICIOS POR TECNICO ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, maxRows);
 
@@ -485,7 +491,7 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== PROXIMOS MANTENIMIENTOS PENDIENTES ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, maxRows);
 
@@ -495,12 +501,13 @@ public class MaintenanceContextRepository {
                     hayDatos = true;
                     sb.append("\n  Fecha     : ").append(rs.getTimestamp("fecha_proxima")).append("\n");
                     sb.append("  Equipo    : ").append(rs.getString("modelo"))
-                      .append(" — ").append(rs.getString("lugar")).append("\n");
+                            .append(" — ").append(rs.getString("lugar")).append("\n");
                     sb.append("  Estado    : ").append(mapearEstado(rs.getString("estado"))).append("\n");
                     sb.append("  Tipo      : ").append(mapearTipo(rs.getString("tipo"))).append("\n");
                     sb.append("  Motivo    : ").append(rs.getString("motivo")).append("\n");
                 }
-                if (!hayDatos) sb.append("  (Sin mantenimientos proximos pendientes)\n");
+                if (!hayDatos)
+                    sb.append("  (Sin mantenimientos proximos pendientes)\n");
             }
 
         } catch (SQLException e) {
@@ -533,7 +540,7 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== EQUIPOS CON MAS FALLAS CORRECTIVAS ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, maxRows);
 
@@ -542,12 +549,13 @@ public class MaintenanceContextRepository {
                 while (rs.next()) {
                     hayDatos = true;
                     sb.append("\n  Equipo    : ").append(rs.getString("modelo"))
-                      .append(" — ").append(rs.getString("lugar")).append("\n");
+                            .append(" — ").append(rs.getString("lugar")).append("\n");
                     sb.append("  Estado    : ").append(mapearEstado(rs.getString("estado"))).append("\n");
                     sb.append("  Fallas    : ").append(rs.getInt("total_fallas")).append("\n");
                     sb.append("  Ultima falla: ").append(rs.getTimestamp("ultima_falla")).append("\n");
                 }
-                if (!hayDatos) sb.append("  (Sin fallas correctivas registradas)\n");
+                if (!hayDatos)
+                    sb.append("  (Sin fallas correctivas registradas)\n");
             }
 
         } catch (SQLException e) {
@@ -582,7 +590,7 @@ public class MaintenanceContextRepository {
         StringBuilder sb = new StringBuilder("=== PROGRAMAS INSTALADOS ===\n");
 
         try (Connection con = ConectionDB.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, like);
             ps.setString(2, like);
@@ -594,13 +602,14 @@ public class MaintenanceContextRepository {
                 while (rs.next()) {
                     hayDatos = true;
                     sb.append("  - ").append(rs.getString("nombre"))
-                      .append(" v").append(rs.getString("version_actual"))
-                      .append(" [").append(rs.getString("tipo_programa")).append("]")
-                      .append(" en ").append(rs.getString("modelo"))
-                      .append(" (").append(rs.getString("lugar")).append(")")
-                      .append("\n");
+                            .append(" v").append(rs.getString("version_actual"))
+                            .append(" [").append(rs.getString("tipo_programa")).append("]")
+                            .append(" en ").append(rs.getString("modelo"))
+                            .append(" (").append(rs.getString("lugar")).append(")")
+                            .append("\n");
                 }
-                if (!hayDatos) sb.append("  (Sin coincidencias para: " + busquedaEquipo + ")\n");
+                if (!hayDatos)
+                    sb.append("  (Sin coincidencias para: " + busquedaEquipo + ")\n");
             }
 
         } catch (SQLException e) {
@@ -627,22 +636,32 @@ public class MaintenanceContextRepository {
     // ================================================================
 
     private String mapearEstado(String dbValue) {
-        if (dbValue == null) return "Desconocido";
+        if (dbValue == null)
+            return "Desconocido";
         switch (dbValue.toLowerCase()) {
-            case "activo":           return "Activo";
-            case "en_mantenimiento": return "En mantenimiento";
-            case "inactivo":         return "Inactivo";
-            case "de_baja":          return "De baja";
-            default:                 return dbValue;
+            case "activo":
+                return "Activo";
+            case "en_mantenimiento":
+                return "En mantenimiento";
+            case "inactivo":
+                return "Inactivo";
+            case "de_baja":
+                return "De baja";
+            default:
+                return dbValue;
         }
     }
 
     private String mapearTipo(String dbValue) {
-        if (dbValue == null) return "Sin tipo";
+        if (dbValue == null)
+            return "Sin tipo";
         switch (dbValue.toLowerCase()) {
-            case "preventivo": return "Preventivo";
-            case "correctivo": return "Correctivo";
-            default:           return dbValue;
+            case "preventivo":
+                return "Preventivo";
+            case "correctivo":
+                return "Correctivo";
+            default:
+                return dbValue;
         }
     }
 }

@@ -296,7 +296,7 @@
             onMouseClicked="#toggleMenu"
             style="-fx-background-color: rgba(15,23,42,0.45);"/>
 
-    <!-- MENU LATERAL -->
+    <!-- ══════════ MENÚ LATERAL (HAMBURGUESA) ══════════ -->
     <VBox fx:id="panelMenu" visible="false" managed="false"
           prefWidth="260" maxWidth="260"
           StackPane.alignment="CENTER_LEFT"
@@ -304,41 +304,49 @@
           style="-fx-background-color: #0f172a; -fx-padding: 24 16 24 16;
                  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 20, 0, 4, 0);">
 
-        <!-- Encabezado del menu -->
         <HBox alignment="CENTER_LEFT" spacing="12">
-            <Label text="C"
+            <Label text="🖥"
                    style="-fx-font-size: 16px;
                           -fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
                           -fx-background-radius: 10; -fx-min-width: 38; -fx-min-height: 38;
                           -fx-alignment: center;"/>
             <VBox spacing="1">
                 <Label text="CGTI" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label text="Panel de navegacion" style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                <Label text="Panel de navegación" style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="X" onAction="#toggleMenu"
+            <Button text="✕" onAction="#toggleMenu"
                     style="-fx-background-color: transparent; -fx-text-fill: #94a3b8;
                            -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 4 8 4 8;"/>
         </HBox>
 
         <Region prefHeight="14"/>
 
-        <!-- Opciones de navegacion -->
-        <Button text="Dashboard" onAction="#irADashboard"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
-
-        <Button fx:id="btnUsuarios" text="Usuarios" onAction="#irAUsuarios"
+        <Button text="🏠  Dashboard" onAction="#irADashboard"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
                 style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
                        -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
+        <Button text="👥  Usuarios" onAction="#irAUsuarios"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+                       -fx-background-radius: 9;
+                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
+        <Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
+                       -fx-font-weight: bold; -fx-background-radius: 9;
+                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
         <Region VBox.vgrow="ALWAYS"/>
 
-        <!-- Pie del menu -->
+        <Button text="⏻  Cerrar sesión" onAction="#cerrarSesion"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: transparent; -fx-text-fill: #f87171; -fx-font-size: 12.5px;
+                       -fx-background-radius: 9; -fx-padding: 10 14 10 14; -fx-cursor: hand;"/>
+
         <HBox alignment="CENTER_LEFT" spacing="10"
               style="-fx-border-color: #1e293b; -fx-border-width: 1 0 0 0; -fx-padding: 14 0 0 0;">
             <Label text="GE"
@@ -347,7 +355,7 @@
                           -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
             <VBox spacing="1">
                 <Label text="Gerardo" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label text="Tecnico CGTI" style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
+                <Label text="Técnico CGTI" style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
             </VBox>
         </HBox>
     </VBox>
