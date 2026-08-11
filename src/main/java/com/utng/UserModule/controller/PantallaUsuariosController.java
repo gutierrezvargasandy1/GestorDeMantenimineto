@@ -81,6 +81,14 @@ public class PantallaUsuariosController {
     private Label lblAdministradores;
     @FXML
     private Label lblTecnicos;
+
+    @FXML
+    private void irASistemasOperativos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/sitemasOperativosModules/PantallaSistemasOperativos/SistemasOperativos.fxml");
+
+    }
+
     @FXML
     private Label lblConsulta;
     @FXML
