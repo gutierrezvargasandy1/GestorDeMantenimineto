@@ -12,6 +12,10 @@ C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\con
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\config\OllamaConfig.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\DashboardModule\controller\PantallaDashboardController.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\DashboardModule\model\MantenimientoModel.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\controller\PantallaEquiposController.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\Equipo.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\EstadoEquipo.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\sistemaOperativo\SistemaOperativo.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\services\EmailService.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\controller\PantallaUsuariosController.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\TipoUsuario.java

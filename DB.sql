@@ -1,7 +1,7 @@
 -- =====================================================================
 -- ESQUEMA: Sistema de Gestión de Equipos, Mantenimientos y Actualizaciones
 -- Motor: PostgreSQL 14+
--- Script completo, listo para ejecutar de un solo golpe (idempotente)
+-- Script completo, listo para ejecutar de un solo golpe )
 -- =====================================================================
 
 BEGIN;

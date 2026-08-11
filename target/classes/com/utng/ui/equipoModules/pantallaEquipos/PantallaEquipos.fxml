@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <StackPane xmlns:fx="http://javafx.com/fxml"
-           fx:controller="com.utng.UserModule.controller.PantallaUsuariosController">
+           fx:controller="com.utng.EquipoModule.controller.PantallaEquiposController">
 
     <!-- ══════════ CONTENIDO PRINCIPAL ══════════ -->
     <VBox spacing="16"
@@ -33,9 +33,9 @@
                            -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);"/>
 
             <VBox spacing="1">
-                <Label text="Gestión de Usuarios"
+                <Label text="Gestión de Equipos"
                        style="-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                <Label text="CGTI · Altas, bajas, cambios y consulta de cuentas del sistema"
+                <Label text="CGTI · Inventario, especificaciones y estado de los equipos de cómputo"
                        style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;"/>
             </VBox>
 
@@ -47,8 +47,8 @@
                            -fx-background-radius: 8; -fx-border-color: #e2e8f0; -fx-border-radius: 8;
                            -fx-padding: 0 14 0 14; -fx-cursor: hand;"/>
 
-            <Button text="＋  Nuevo usuario"
-                    onAction="#nuevoUsuario"
+            <Button text="＋  Nuevo equipo"
+                    onAction="#nuevoEquipo"
                     prefHeight="34"
                     style="-fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
                            -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;
@@ -63,61 +63,45 @@
                   style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
                          -fx-border-color: #e8ecf2; -fx-border-radius: 10;
                          -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="👥" style="-fx-font-size: 12px; -fx-background-color: #eef2ff;
+                <Label text="🖥" style="-fx-font-size: 12px; -fx-background-color: #eef2ff;
                                        -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
                                        -fx-alignment: center;"/>
                 <VBox spacing="1">
-                    <Label fx:id="lblTotalUsuarios" text="0"
+                    <Label fx:id="lblTotalEquipos" text="0"
                            style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                    <Label text="Total de usuarios"
+                    <Label text="Total de equipos"
                            style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
                 </VBox>
             </HBox>
 
-            <!-- ADMINISTRADORES -->
+            <!-- ACTIVOS -->
             <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
                   style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
                          -fx-border-color: #e8ecf2; -fx-border-radius: 10;
                          -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="🛡" style="-fx-font-size: 12px; -fx-text-fill: #7c3aed;
-                                      -fx-background-color: #ede9fe; -fx-background-radius: 8;
-                                      -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+                <Label text="✅" style="-fx-font-size: 12px; -fx-background-color: #dcfce7;
+                                       -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                       -fx-alignment: center;"/>
                 <VBox spacing="1">
-                    <Label fx:id="lblAdministradores" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #7c3aed;"/>
-                    <Label text="Administradores"
+                    <Label fx:id="lblEquiposActivos" text="0"
+                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #15803d;"/>
+                    <Label text="Activos"
                            style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
                 </VBox>
             </HBox>
 
-            <!-- TÉCNICOS -->
+            <!-- EN MANTENIMIENTO -->
             <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
                   style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
                          -fx-border-color: #e8ecf2; -fx-border-radius: 10;
                          -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="🛠" style="-fx-font-size: 12px; -fx-text-fill: #2563eb;
-                                      -fx-background-color: #dbeafe; -fx-background-radius: 8;
+                <Label text="🛠" style="-fx-font-size: 12px; -fx-text-fill: #b45309;
+                                      -fx-background-color: #fef3c7; -fx-background-radius: 8;
                                       -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
                 <VBox spacing="1">
-                    <Label fx:id="lblTecnicos" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2563eb;"/>
-                    <Label text="Técnicos"
-                           style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
-                </VBox>
-            </HBox>
-
-            <!-- CONSULTA -->
-            <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
-                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="👁" style="-fx-font-size: 12px; -fx-text-fill: #0f766e;
-                                      -fx-background-color: #ccfbf1; -fx-background-radius: 8;
-                                      -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
-                <VBox spacing="1">
-                    <Label fx:id="lblConsulta" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f766e;"/>
-                    <Label text="Solo consulta"
+                    <Label fx:id="lblEnMantenimiento" text="0"
+                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #b45309;"/>
+                    <Label text="En mantenimiento"
                            style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
                 </VBox>
             </HBox>
@@ -127,19 +111,35 @@
                   style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
                          -fx-border-color: #e8ecf2; -fx-border-radius: 10;
                          -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                <Label text="⏸" style="-fx-font-size: 12px; -fx-text-fill: #475569;
+                                      -fx-background-color: #f1f5f9; -fx-background-radius: 8;
+                                      -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+                <VBox spacing="1">
+                    <Label fx:id="lblInactivos" text="0"
+                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+                    <Label text="Inactivos"
+                           style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                </VBox>
+            </HBox>
+
+            <!-- DE BAJA -->
+            <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
                 <Label text="⛔" style="-fx-font-size: 12px; -fx-background-color: #fee2e2;
                                        -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
                                        -fx-alignment: center;"/>
                 <VBox spacing="1">
-                    <Label fx:id="lblInactivos" text="0"
+                    <Label fx:id="lblDeBaja" text="0"
                            style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #dc2626;"/>
-                    <Label text="Inactivos"
+                    <Label text="De baja"
                            style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
                 </VBox>
             </HBox>
         </HBox>
 
-        <!-- ══════════ PANEL DE USUARIOS ══════════ -->
+        <!-- ══════════ PANEL DE EQUIPOS ══════════ -->
         <VBox spacing="12" VBox.vgrow="ALWAYS"
               style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
                      -fx-border-color: #e8ecf2; -fx-border-radius: 10;
@@ -147,29 +147,29 @@
 
             <!-- BARRA BUSCADORA + FILTROS -->
             <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Usuarios registrados"
+                <Label text="Equipos registrados"
                        style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <TextField fx:id="txtBuscar" promptText="🔍  Buscar usuario…"
+                <TextField fx:id="txtBuscar" promptText="🔍  Buscar equipo…"
                            prefWidth="240" prefHeight="30"
-                           onKeyReleased="#filtrarUsuarios"
+                           onKeyReleased="#filtrarEquipos"
                            style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
                                   -fx-border-color: #e2e8f0; -fx-border-radius: 7;
                                   -fx-font-size: 11.5px; -fx-padding: 0 10 0 10;"/>
 
                 <ComboBox fx:id="cmbCampo" prefHeight="30" prefWidth="150"
-                          promptText="Buscar en…" onAction="#filtrarUsuarios"
+                          promptText="Buscar en…" onAction="#filtrarEquipos"
                           style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
                                  -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
 
-                <ComboBox fx:id="cmbRol" prefHeight="30" prefWidth="140"
-                          promptText="Todos los roles" onAction="#filtrarUsuarios"
+                <ComboBox fx:id="cmbEstado" prefHeight="30" prefWidth="150"
+                          promptText="Todos los estados" onAction="#filtrarEquipos"
                           style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
                                  -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
 
-                <ComboBox fx:id="cmbEstado" prefHeight="30" prefWidth="125"
-                          promptText="Todos" onAction="#filtrarUsuarios"
+                <ComboBox fx:id="cmbLugar" prefHeight="30" prefWidth="150"
+                          promptText="Todos los lugares" onAction="#filtrarEquipos"
                           style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
                                  -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
 
@@ -179,62 +179,72 @@
                                -fx-background-radius: 7; -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
             </HBox>
 
-            <!-- CHIPS DE ROL -->
+            <!-- CHIPS DE ESTADO -->
             <HBox fx:id="contenedorChips" spacing="8" alignment="CENTER_LEFT">
-                <Button fx:id="chipTodos" text="Todos" onAction="#filtrarPorRol"
+                <Button fx:id="chipTodos" text="Todos" onAction="#filtrarPorEstado"
                         style="-fx-background-color: #0f172a; -fx-text-fill: white; -fx-font-size: 11px;
                                -fx-font-weight: bold; -fx-background-radius: 16;
                                -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
 
-                <Button fx:id="chipAdministrador" text="🛡  Administradores"
-                        onAction="#filtrarPorRol"
-                        style="-fx-background-color: #ede9fe; -fx-text-fill: #6d28d9; -fx-font-size: 11px;
+                <Button fx:id="chipActivos" text="✅  Activos"
+                        onAction="#filtrarPorEstado"
+                        style="-fx-background-color: #dcfce7; -fx-text-fill: #15803d; -fx-font-size: 11px;
                                -fx-font-weight: bold; -fx-background-radius: 16;
-                               -fx-border-color: #ddd6fe; -fx-border-radius: 16;
+                               -fx-border-color: #bbf7d0; -fx-border-radius: 16;
                                -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
 
-                <Button fx:id="chipTecnico" text="🛠  Técnicos"
-                        onAction="#filtrarPorRol"
-                        style="-fx-background-color: #dbeafe; -fx-text-fill: #1d4ed8; -fx-font-size: 11px;
+                <Button fx:id="chipMantenimiento" text="🛠  En mantenimiento"
+                        onAction="#filtrarPorEstado"
+                        style="-fx-background-color: #fef3c7; -fx-text-fill: #b45309; -fx-font-size: 11px;
                                -fx-font-weight: bold; -fx-background-radius: 16;
-                               -fx-border-color: #bfdbfe; -fx-border-radius: 16;
+                               -fx-border-color: #fde68a; -fx-border-radius: 16;
                                -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
 
-                <Button fx:id="chipConsulta" text="👁  Consulta"
-                        onAction="#filtrarPorRol"
-                        style="-fx-background-color: #ccfbf1; -fx-text-fill: #0f766e; -fx-font-size: 11px;
+                <Button fx:id="chipInactivos" text="⏸  Inactivos"
+                        onAction="#filtrarPorEstado"
+                        style="-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-font-size: 11px;
                                -fx-font-weight: bold; -fx-background-radius: 16;
-                               -fx-border-color: #99f6e4; -fx-border-radius: 16;
+                               -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                               -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
+
+                <Button fx:id="chipBaja" text="⛔  De baja"
+                        onAction="#filtrarPorEstado"
+                        style="-fx-background-color: #fee2e2; -fx-text-fill: #b91c1c; -fx-font-size: 11px;
+                               -fx-font-weight: bold; -fx-background-radius: 16;
+                               -fx-border-color: #fecaca; -fx-border-radius: 16;
                                -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <Label fx:id="lblResultados" text="0 usuarios"
+                <Label fx:id="lblResultados" text="0 equipos"
                        style="-fx-font-size: 11px; -fx-text-fill: #64748b;
                               -fx-background-color: #f4f6fa; -fx-background-radius: 16;
                               -fx-padding: 5 12 5 12;"/>
             </HBox>
 
             <!-- TABLA -->
-            <TableView fx:id="tablaUsuarios" VBox.vgrow="ALWAYS" prefHeight="360"
+            <TableView fx:id="tablaEquipos" VBox.vgrow="ALWAYS" prefHeight="360"
                        style="-fx-background-color: transparent; -fx-border-color: #eef1f5;
                               -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 11.5px;">
                 <placeholder>
                     <VBox alignment="CENTER" spacing="5">
-                        <Label text="👤" style="-fx-font-size: 22px; -fx-opacity: 0.35;"/>
-                        <Label text="No se encontraron usuarios con los filtros aplicados"
+                        <Label text="🖥" style="-fx-font-size: 22px; -fx-opacity: 0.35;"/>
+                        <Label text="No se encontraron equipos con los filtros aplicados"
                                style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
                     </VBox>
                 </placeholder>
                 <columns>
-                    <TableColumn fx:id="colId"        text="ID"              prefWidth="60"/>
-                    <TableColumn fx:id="colNombre"    text="Nombre(s)"       prefWidth="150"/>
-                    <TableColumn fx:id="colApellidos" text="Apellidos"       prefWidth="180"/>
-                    <TableColumn fx:id="colCorreo"    text="Correo"          prefWidth="230"/>
-                    <TableColumn fx:id="colRol"       text="Rol"             prefWidth="130"/>
-                    <TableColumn fx:id="colEstado"    text="Estado"          prefWidth="110"/>
-                    <TableColumn fx:id="colFecha"     text="Fecha de alta"   prefWidth="130"/>
-                    <TableColumn fx:id="colAcciones"  text="Acciones"        prefWidth="140"
+                    <TableColumn fx:id="colId"             text="ID"                 prefWidth="55"/>
+                    <TableColumn fx:id="colModelo"         text="Modelo"             prefWidth="150"/>
+                    <TableColumn fx:id="colLugar"          text="Lugar"              prefWidth="145"/>
+                    <TableColumn fx:id="colProcesador"     text="Procesador"         prefWidth="150"/>
+                    <TableColumn fx:id="colRam"            text="RAM"                prefWidth="75"/>
+                    <TableColumn fx:id="colAlmacenamiento" text="Almacenamiento"     prefWidth="115"/>
+                    <TableColumn fx:id="colAnio"           text="Año"                prefWidth="60"/>
+                    <TableColumn fx:id="colSistemaOp"      text="Sistema operativo"  prefWidth="150"/>
+                    <TableColumn fx:id="colResponsable"    text="Responsable"        prefWidth="150"/>
+                    <TableColumn fx:id="colEstado"         text="Estado"             prefWidth="140"/>
+                    <TableColumn fx:id="colAcciones"       text="Acciones"           prefWidth="120"
                                  sortable="false"/>
                 </columns>
             </TableView>
@@ -245,22 +255,17 @@
                        style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <Button fx:id="btnVer" text="👁  Ver detalle" onAction="#verUsuario"
+                <Button fx:id="btnVer" text="👁  Ver detalle" onAction="#verEquipo"
                         style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 11.5px;
                                -fx-background-radius: 7; -fx-border-color: #e2e8f0; -fx-border-radius: 7;
                                -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
 
-                <Button fx:id="btnEditar" text="✏  Editar" onAction="#editarUsuario"
+                <Button fx:id="btnEditar" text="✏  Editar" onAction="#editarEquipo"
                         style="-fx-background-color: #eef2ff; -fx-text-fill: #1d4ed8; -fx-font-weight: bold;
                                -fx-font-size: 11.5px; -fx-background-radius: 7;
                                -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
 
-                <Button fx:id="btnReactivar" text="⟳  Reactivar" onAction="#reactivarUsuario"
-                        style="-fx-background-color: #dcfce7; -fx-text-fill: #15803d; -fx-font-weight: bold;
-                               -fx-font-size: 11.5px; -fx-background-radius: 7;
-                               -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
-
-                <Button fx:id="btnEliminar" text="🗑  Eliminar" onAction="#eliminarUsuario"
+                <Button fx:id="btnEliminar" text="🗑  Eliminar" onAction="#eliminarEquipo"
                         style="-fx-background-color: #fee2e2; -fx-text-fill: #b91c1c; -fx-font-weight: bold;
                                -fx-font-size: 11.5px; -fx-background-radius: 7;
                                -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
@@ -305,16 +310,16 @@
                        -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button fx:id="btnUsuarios" text="👥  Usuarios" onAction="#irAUsuarios"
+        <Button text="👥  Usuarios" onAction="#irAUsuarios"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
+                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+                       -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
         <Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
+                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
+                       -fx-font-weight: bold; -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
         <Region VBox.vgrow="ALWAYS"/>

@@ -33,7 +33,7 @@ public class AuthService {
             usuario.setFechaCodigo(new Timestamp(System.currentTimeMillis()));
             usuarioRepository.actualizar(usuario);
             emailService.enviarCorreo(correo, "Recuperacion de Credenciales",
-            emailService.codigoRecuperacion(codioRecuperacion));
+                    emailService.codigoRecuperacion(codioRecuperacion));
             System.out.print("Usuario en recuperacion");
             return true;
 
@@ -48,7 +48,7 @@ public class AuthService {
 
         try {
             Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
-            if (usuario == null){
+            if (usuario == null) {
                 System.out.print("Ususario nulo ASSASASASA");
             }
             if (usuario != null && usuario.getRecuperacionActiva() == true) {
@@ -68,7 +68,7 @@ public class AuthService {
                 usuario.setIntentosRecuperacion(0);
 
                 usuarioRepository.actualizar(usuario);
-                
+
                 return true;
 
             }
@@ -76,52 +76,52 @@ public class AuthService {
         } catch (AppException e) {
             throw new AppException("Error al confirmar la recuperacion ", e);
         }
-        
+
     }
 
-    public boolean cambiaPasword(String correo, String password){
+    public boolean cambiaPasword(String correo, String password) {
         try {
             Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
 
-            if(usuario != null && usuario.getRecuperacionActiva() == true ){
-            String hash = passwordUtil.hashPassword(password);
-            usuario.setPassword(hash);
-            usuario.setRecuperacionActiva(false);
-            usuarioRepository.actualizar(usuario);
-            return true;
-            }
-            else{
+            if (usuario != null && usuario.getRecuperacionActiva() == true) {
+                String hash = passwordUtil.hashPassword(password);
+                usuario.setPassword(hash);
+                usuario.setRecuperacionActiva(false);
+                usuarioRepository.actualizar(usuario);
+                return true;
+            } else {
                 System.out.print("No  se encontro el User o no esta en recuperacion ");
                 return false;
             }
-            
 
         } catch (AppException e) {
             throw new AppException("Error al restablecer la password", e);
         }
-        
+
     }
 
-    public boolean login (String correo, String password ){
+    public boolean login(String correo, String password) {
         try {
             Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
-             boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
-             if (res){
-             System.out.print("Login exitoso");
+            if (usuario == null) {
+                System.out.print("usuario no encontrado");
+                return false;
+            }
+            boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
+            if (res) {
+                System.out.print("Login exitoso");
             } else {
                 System.out.print("Credenciales incorrectas");
             }
-             return res;
-             
-
+            return res;
 
         } catch (AppException e) {
-            throw new AppException("Error en login",e);
+            throw new AppException("Error en login", e);
         }
 
     }
 
-    public boolean registro(Usuario usuario){
+    public boolean registro(Usuario usuario) {
         try {
             usuarioRepository.guardar(usuario);
             return true;

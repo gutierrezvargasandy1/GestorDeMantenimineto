@@ -147,6 +147,8 @@ public class PantallaUsuariosController {
     private Button btnEliminar;
     @FXML
     private Button btnUsuarios;
+    @FXML
+    private Button btnEquipos;
 
     // ============================================================
     // MENÚ LATERAL
@@ -907,6 +909,11 @@ public class PantallaUsuariosController {
     @FXML
     private void irAUsuarios() {
         toggleMenu(); // ya estamos en esta pantalla
+    }
+
+    @FXML
+    private void irAEquipos() {
+        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
     }
 
     @FXML

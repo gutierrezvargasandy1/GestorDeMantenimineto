@@ -318,6 +318,12 @@ public class PantallaDashboardController {
 
     }
 
+    @FXML
+    private void irAEquipos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
+    }
+
     // ============================================================
     // ESTADÍSTICAS (calculadas desde los datos)
     // ============================================================
