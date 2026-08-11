@@ -129,6 +129,13 @@ public class PantallaEquiposController {
     @FXML
     private Label lblResultados;
 
+    @FXML
+    private void irASistemasOperativos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/sitemasOperativosModules/PantallaSistemasOperativos/SistemasOperativos.fxml");
+
+    }
+
     // ============================================================
     // TABLA
     // ============================================================

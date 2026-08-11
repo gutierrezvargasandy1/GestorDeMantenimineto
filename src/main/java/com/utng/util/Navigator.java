@@ -38,7 +38,8 @@ public class Navigator {
             FXMLLoader loader = new FXMLLoader(location);
             Parent root = loader.load();
 
-            // Si la escena ya existe, solo cambiamos el contenido raíz para no perder el estado maximizado
+            // Si la escena ya existe, solo cambiamos el contenido raíz para no perder el
+            // estado maximizado
             if (stage.getScene() != null) {
                 stage.getScene().setRoot(root);
             } else {

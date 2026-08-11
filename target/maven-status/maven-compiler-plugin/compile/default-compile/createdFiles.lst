@@ -1,5 +1,6 @@
 com\utng\AiModule\OllamaModels$GenerateResponse.class
 com\utng\App.class
+com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller$1.class
 com\utng\EquipoModule\model\sistemaOperativo\SistemaOperativo.class
 com\utng\AuthModule\controller\RecuperarPasswordController.class
 com\utng\UserModule\UsuarioRepository.class
@@ -14,6 +15,7 @@ com\utng\util\MarkdownRenderer.class
 com\utng\util\PasswordUtil.class
 com\utng\EquipoModule\controller\PantallaEquiposController$3.class
 com\utng\AuthModule\services\AuthService.class
+com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller$2.class
 com\utng\AuthModule\controller\CodigoRecuperacionController.class
 com\utng\UserModule\controller\PantallaUsuariosController.class
 com\utng\UserModule\controller\PantallaUsuariosController$5.class
@@ -28,6 +30,7 @@ com\utng\EquipoModule\controller\PantallaEquiposController$5.class
 com\utng\UserModule\controller\PantallaUsuariosController$4.class
 com\utng\AiModule\OllamaModels.class
 com\utng\DashboardModule\controller\PantallaDashboardController$2.class
+com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller.class
 com\utng\services\EmailService.class
 com\utng\DashboardModule\repository\MantenimientoRepository.class
 com\utng\AiModule\OllamaModels$OllamaOptions.class
