@@ -147,8 +147,6 @@ public class PantallaUsuariosController {
     private Button btnEliminar;
     @FXML
     private Button btnUsuarios;
-    @FXML
-    private Button btnEquipos;
 
     // ============================================================
     // MENÚ LATERAL
@@ -157,6 +155,12 @@ public class PantallaUsuariosController {
     private Region overlayMenu;
     @FXML
     private VBox panelMenu;
+
+    @FXML
+    private void irAEquipos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
+    }
 
     // ============================================================
     // DATOS EN MEMORIA
@@ -909,11 +913,6 @@ public class PantallaUsuariosController {
     @FXML
     private void irAUsuarios() {
         toggleMenu(); // ya estamos en esta pantalla
-    }
-
-    @FXML
-    private void irAEquipos() {
-        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
     }
 
     @FXML

@@ -8,7 +8,8 @@ package com.utng.EquipoModule.model.equipo;
  * </pre>
  *
  * {@link #getValor()} devuelve EXACTAMENTE el literal que espera la base de
- * datos, para poder hacer {@code ps.setObject(n, estado.getValor(), Types.OTHER)}
+ * datos, para poder hacer
+ * {@code ps.setObject(n, estado.getValor(), Types.OTHER)}
  * cuando se conecte el repositorio.
  */
 public enum EstadoEquipo {

@@ -76,9 +76,11 @@ public class PantallaEquiposController {
 
     private static final int ANIO_MINIMO = 1990;
 
-    /** Opción "sin FK" para los ComboBox: representa un NULL en la base de datos. */
-    private static final SistemaOperativo SIN_SISTEMA_OPERATIVO =
-            new SistemaOperativo(null, null, "— Sin asignar —", "");
+    /**
+     * Opción "sin FK" para los ComboBox: representa un NULL en la base de datos.
+     */
+    private static final SistemaOperativo SIN_SISTEMA_OPERATIVO = new SistemaOperativo(null, null, "— Sin asignar —",
+            "");
     private static final Usuario SIN_RESPONSABLE = crearResponsableVacio();
 
     // ============================================================
@@ -94,6 +96,12 @@ public class PantallaEquiposController {
     private Label lblInactivos;
     @FXML
     private Label lblDeBaja;
+
+    @FXML
+    private void irAEquipos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/equipoModules/pantallaEquipos/PantallaEquipos.fxml");
+    }
 
     // ============================================================
     // BARRA BUSCADORA Y FILTROS
@@ -180,7 +188,9 @@ public class PantallaEquiposController {
 
     private FilteredList<Equipo> datosFiltrados;
 
-    /** Evita que la recarga programática del ComboBox de lugares dispare el filtro. */
+    /**
+     * Evita que la recarga programática del ComboBox de lugares dispare el filtro.
+     */
     private boolean actualizandoFiltros = false;
 
     // ============================================================
@@ -339,7 +349,10 @@ public class PantallaEquiposController {
         aplicarFiltros();
     }
 
-    /** Chips de estado. El ComboBox de estado es la única fuente de verdad del filtro. */
+    /**
+     * Chips de estado. El ComboBox de estado es la única fuente de verdad del
+     * filtro.
+     */
     @FXML
     private void filtrarPorEstado(ActionEvent e) {
         Object origen = e.getSource();
@@ -454,7 +467,9 @@ public class PantallaEquiposController {
         lblResultados.setText(visibles == 1 ? "1 equipo" : visibles + " equipos");
     }
 
-    /** Reconstruye la lista de lugares del filtro a partir de los datos actuales. */
+    /**
+     * Reconstruye la lista de lugares del filtro a partir de los datos actuales.
+     */
     private void refrescarLugares() {
         actualizandoFiltros = true;
         try {
@@ -552,7 +567,8 @@ public class PantallaEquiposController {
                         + "actualizaciones, su historial y los programas instalados asociados.");
 
         if (confirmado) {
-            // TODO BD: equipoRepository.eliminar(equipo.getIdEquipo());  -> DELETE FROM equipos WHERE id = ?
+            // TODO BD: equipoRepository.eliminar(equipo.getIdEquipo()); -> DELETE FROM
+            // equipos WHERE id = ?
             datos.remove(equipo);
             refrescar();
             info("Equipo eliminado", "Se eliminó el equipo " + descripcionCorta(equipo) + ".");
@@ -1032,11 +1048,6 @@ public class PantallaEquiposController {
     @FXML
     private void irAUsuarios() {
         Navigator.navigate("/com/utng/ui/usuarioModules/pantallaUsuarios/PantallaUsuarios.fxml");
-    }
-
-    @FXML
-    private void irAEquipos() {
-        toggleMenu(); // ya estamos en esta pantalla
     }
 
     @FXML

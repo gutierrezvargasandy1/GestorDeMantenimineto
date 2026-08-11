@@ -62,6 +62,8 @@ public class Equipo {
     /** equipos.fecha_creacion */
     private Timestamp fechaCreacion;
 
-    /** equipos.fecha_actualizacion — la mantiene el trigger trg_equipos_actualizado */
+    /**
+     * equipos.fecha_actualizacion — la mantiene el trigger trg_equipos_actualizado
+     */
     private Timestamp fechaActualizacion;
 }

@@ -29,6 +29,7 @@ com\utng\UserModule\controller\PantallaUsuariosController$4.class
 com\utng\AiModule\OllamaModels.class
 com\utng\DashboardModule\controller\PantallaDashboardController$2.class
 com\utng\services\EmailService.class
+com\utng\DashboardModule\repository\MantenimientoRepository.class
 com\utng\AiModule\OllamaModels$OllamaOptions.class
 com\utng\EquipoModule\controller\PantallaEquiposController$1.class
 com\utng\EquipoModule\model\equipo\Equipo.class
