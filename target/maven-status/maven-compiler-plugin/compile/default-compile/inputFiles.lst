@@ -1,3 +1,6 @@
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\ActualizacionModule\controller\PantallaActualizacionesController.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\ActualizacionModule\model\actualizacion\RegistroActualizacion.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\ActualizacionModule\model\actualizacion\TipoActualizacion.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AiModule\data\MaintenanceContextRepository.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AiModule\OllamaModels.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AiModule\OllamaService.java
@@ -17,6 +20,9 @@ C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\Equ
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\Equipo.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\EstadoEquipo.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\sistemaOperativo\SistemaOperativo.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\controller\PantallaMantenimientosController.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\RegistroMantenimiento.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\TipoMantenimiento.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\services\EmailService.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\controller\PantallaUsuariosController.java
@@ -27,3 +33,4 @@ C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\uti
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\MarkdownRenderer.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\Navigator.java
 C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\PasswordUtil.java
+C:\Users\gerar\OneDrive\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\RolManage.java

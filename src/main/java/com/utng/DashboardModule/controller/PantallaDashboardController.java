@@ -167,7 +167,7 @@ public class PantallaDashboardController {
     // FECHA
     // ============================================================
     private void configurarFecha() {
-        DateTimeFormatter f = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", new Locale("es", "MX"));
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale.of("es", "MX"));
         String texto = LocalDate.now().format(f);
         lblFechaHoy.setText(Character.toUpperCase(texto.charAt(0)) + texto.substring(1));
     }
@@ -457,6 +457,20 @@ public class PantallaDashboardController {
         toggleMenu();
         Navigator.navigate("/com/utng/ui/sitemasOperativosModules/PantallaSistemasOperativos/SistemasOperativos.fxml");
 
+    }
+
+    @FXML
+    private void irAMantenimientos() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
+    }
+
+    @FXML
+    private void irAActualizaciones() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/actualizacionModules/pantallaActualizaciones/PantallaActualizaciones.fxml");
     }
 
     @FXML

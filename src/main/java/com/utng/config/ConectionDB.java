@@ -12,15 +12,14 @@ public class ConectionDB {
     private static final String USER = dotenv.get("DB_USER");
     private static final String PASSWORD = dotenv.get("DB_PASSWORD");
 
-    public static Connection conectar(){
-        try{
-              Connection conexion =  DriverManager.getConnection(URL, USER, PASSWORD);
-              System.out.print("Se Establecio la conexion con la bases de datos");
-              return conexion;
-        }
-        catch(SQLException e){
-             System.out.println("Error al conectar: " + e.getMessage());
-             return null;
+    public static Connection conectar() {
+        try {
+            Connection conexion = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.print("Se Establecio la conexion con la bases de datos");
+            return conexion;
+        } catch (SQLException e) {
+            System.out.println("Error al conectar: " + e.getMessage());
+            return null;
         }
 
     }
