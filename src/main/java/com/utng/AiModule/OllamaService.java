@@ -107,10 +107,10 @@ public class OllamaService {
      * Construye el prompt completo que se envia a Ollama.
      *
      * Estructura:
-     *  [ROL DEL ASISTENTE]
-     *  [DATOS REALES DE LA BD]
-     *  [INSTRUCCIONES DE RESPUESTA]
-     *  [PREGUNTA DEL USUARIO]
+     * [ROL DEL ASISTENTE]
+     * [DATOS REALES DE LA BD]
+     * [INSTRUCCIONES DE RESPUESTA]
+     * [PREGUNTA DEL USUARIO]
      */
     private String construirPromptConContexto(String pregunta, String contextoBD) {
 
@@ -161,16 +161,16 @@ public class OllamaService {
     private GenerateRequest buildRequest(String prompt) {
         OllamaOptions options = new OllamaOptions();
         options.temperature = OllamaConfig.temperature();
-        options.topP        = OllamaConfig.topP();
-        options.topK        = OllamaConfig.topK();
-        options.numPredict  = OllamaConfig.numPredict();
-        options.numCtx      = OllamaConfig.numCtx();
+        options.topP = OllamaConfig.topP();
+        options.topK = OllamaConfig.topK();
+        options.numPredict = OllamaConfig.numPredict();
+        options.numCtx = OllamaConfig.numCtx();
 
         GenerateRequest req = new GenerateRequest();
-        req.model   = OllamaConfig.model();
-        req.prompt  = prompt;
-        req.system  = OllamaConfig.systemPrompt();
-        req.stream  = OllamaConfig.stream(); // false = respuesta completa en un JSON
+        req.model = OllamaConfig.model();
+        req.prompt = prompt;
+        req.system = OllamaConfig.systemPrompt();
+        req.stream = OllamaConfig.stream(); // false = respuesta completa en un JSON
         req.options = options;
         return req;
     }

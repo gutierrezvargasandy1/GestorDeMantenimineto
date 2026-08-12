@@ -143,15 +143,11 @@ public class Pantallasistemasoperativoscontroller {
     // BOTONERA
     // ============================================================
     @FXML
-    private Button btnMenu;
-    @FXML
     private Button btnVer;
     @FXML
     private Button btnEditar;
     @FXML
     private Button btnEliminar;
-    @FXML
-    private Button btnSistemas;
 
     // ============================================================
     // MENÚ LATERAL
@@ -263,7 +259,7 @@ public class Pantallasistemasoperativoscontroller {
             }
         });
 
-        tablaSistemas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaSistemas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         // Doble clic sobre la fila -> editar
         tablaSistemas.setRowFactory(tv -> {
@@ -877,6 +873,20 @@ public class Pantallasistemasoperativoscontroller {
     }
 
     @FXML
+    private void irAMantenimientos() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
+    }
+
+    @FXML
+    private void irAActualizaciones() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/actualizacionModules/pantallaActualizaciones/PantallaActualizaciones.fxml");
+    }
+
+    @FXML
     private void volver() {
         Navigator.goBack();
     }
@@ -1015,4 +1025,5 @@ public class Pantallasistemasoperativoscontroller {
     private static boolean contiene(String valor, String busqueda) {
         return valor != null && valor.toLowerCase().contains(busqueda);
     }
+
 }

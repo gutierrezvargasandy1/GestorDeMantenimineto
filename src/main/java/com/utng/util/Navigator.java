@@ -25,7 +25,6 @@ public class Navigator {
         navigateAndGetController(ruta);
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> T navigateAndGetController(String ruta) {
         try {
             URL location = Navigator.class.getResource(ruta);

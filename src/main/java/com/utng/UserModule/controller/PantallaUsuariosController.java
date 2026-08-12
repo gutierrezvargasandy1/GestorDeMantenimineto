@@ -90,6 +90,20 @@ public class PantallaUsuariosController {
     }
 
     @FXML
+    private void irAMantenimientos() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
+    }
+
+    @FXML
+    private void irAActualizaciones() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/actualizacionModules/pantallaActualizaciones/PantallaActualizaciones.fxml");
+    }
+
+    @FXML
     private Label lblConsulta;
     @FXML
     private Label lblInactivos;
@@ -144,8 +158,6 @@ public class PantallaUsuariosController {
     // BOTONERA
     // ============================================================
     @FXML
-    private Button btnMenu;
-    @FXML
     private Button btnVer;
     @FXML
     private Button btnEditar;
@@ -153,8 +165,6 @@ public class PantallaUsuariosController {
     private Button btnReactivar;
     @FXML
     private Button btnEliminar;
-    @FXML
-    private Button btnUsuarios;
 
     // ============================================================
     // MENÚ LATERAL
@@ -300,7 +310,7 @@ public class PantallaUsuariosController {
             }
         });
 
-        tablaUsuarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaUsuarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         // Doble clic sobre la fila -> editar
         tablaUsuarios.setRowFactory(tv -> {

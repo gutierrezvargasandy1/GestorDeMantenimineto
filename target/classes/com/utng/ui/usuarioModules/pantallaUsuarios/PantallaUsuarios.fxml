@@ -322,6 +322,18 @@
                 style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
                        -fx-font-weight: bold; -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+        <Button text="🔧  Mantenimientos" onAction="#irAMantenimientos"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+                       -fx-background-radius: 9;
+                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
+        <Button text="🔄  Actualizaciones" onAction="#irAActualizaciones"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+                       -fx-background-radius: 9;
+                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
 
 
         <Region VBox.vgrow="ALWAYS"/>
