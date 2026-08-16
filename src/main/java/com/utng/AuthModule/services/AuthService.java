@@ -5,6 +5,7 @@ import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.services.EmailService;
 import com.utng.util.AppException;
 import com.utng.util.PasswordUtil;
+import com.utng.util.RolManage;
 
 import java.security.SecureRandom;
 import java.sql.Timestamp;
@@ -33,7 +34,7 @@ public class AuthService {
             usuario.setFechaCodigo(new Timestamp(System.currentTimeMillis()));
             usuarioRepository.actualizar(usuario);
             emailService.enviarCorreo(correo, "Recuperacion de Credenciales",
-                    emailService.codigoRecuperacion(codioRecuperacion));
+            emailService.codigoRecuperacion(codioRecuperacion));
             System.out.print("Usuario en recuperacion");
             return true;
 
@@ -100,26 +101,24 @@ public class AuthService {
 
     }
 
-    public boolean login(String correo, String password) {
-        try {
-            Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
-            if (usuario == null) {
-                System.out.print("usuario no encontrado");
-                return false;
-            }
-            boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
-            if (res) {
-                System.out.print("Login exitoso");
-            } else {
-                System.out.print("Credenciales incorrectas");
-            }
-            return res;
+// Ya no es un campo de instancia
+// private final RolManage rolManage = new RolManage();  ← borrar
 
-        } catch (AppException e) {
-            throw new AppException("Error en login", e);
+public boolean login(String correo, String password) {
+    try {
+        Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
+        if (usuario == null) return false;
+
+        boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
+        if (res) {
+            RolManage.getInstance().setRol(usuario.getTipoUsuario()); // ← singleton
         }
+        return res;
 
+    } catch (AppException e) {
+        throw new AppException("Error en login", e);
     }
+}
 
     public boolean registro(Usuario usuario) {
         try {

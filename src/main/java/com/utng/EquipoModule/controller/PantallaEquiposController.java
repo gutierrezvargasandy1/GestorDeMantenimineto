@@ -129,6 +129,27 @@ public class PantallaEquiposController {
     @FXML
     private Label lblResultados;
 
+    @FXML
+    private void irASistemasOperativos() {
+        toggleMenu();
+        Navigator.navigate("/com/utng/ui/sitemasOperativosModules/PantallaSistemasOperativos/SistemasOperativos.fxml");
+
+    }
+
+    @FXML
+    private void irAMantenimientos() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
+    }
+
+    @FXML
+    private void irAActualizaciones() {
+        toggleMenu();
+        Navigator.navigate(
+                "/com/utng/ui/actualizacionModules/pantallaActualizaciones/PantallaActualizaciones.fxml");
+    }
+
     // ============================================================
     // TABLA
     // ============================================================
@@ -161,15 +182,11 @@ public class PantallaEquiposController {
     // BOTONERA
     // ============================================================
     @FXML
-    private Button btnMenu;
-    @FXML
     private Button btnVer;
     @FXML
     private Button btnEditar;
     @FXML
     private Button btnEliminar;
-    @FXML
-    private Button btnEquipos;
 
     // ============================================================
     // MENÚ LATERAL
@@ -298,7 +315,7 @@ public class PantallaEquiposController {
             }
         });
 
-        tablaEquipos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tablaEquipos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         // Doble clic sobre la fila -> editar
         tablaEquipos.setRowFactory(tv -> {

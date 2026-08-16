@@ -1,3 +1,6 @@
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\ActualizacionModule\controller\PantallaActualizacionesController.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\ActualizacionModule\model\actualizacion\RegistroActualizacion.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\ActualizacionModule\model\actualizacion\TipoActualizacion.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AiModule\data\MaintenanceContextRepository.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AiModule\OllamaModels.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\AiModule\OllamaService.java
@@ -17,7 +20,11 @@ C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\Equipo.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\EstadoEquipo.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\sistemaOperativo\SistemaOperativo.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\controller\PantallaMantenimientosController.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\RegistroMantenimiento.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\TipoMantenimiento.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\services\EmailService.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\controller\PantallaUsuariosController.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\TipoUsuario.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\Usuario.java
@@ -26,3 +33,4 @@ C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\AppExce
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\MarkdownRenderer.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\Navigator.java
 C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\PasswordUtil.java
+C:\Users\andre\Desktop\GestorDeMantenimineto\src\main\java\com\utng\util\RolManage.java
