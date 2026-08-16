@@ -34,7 +34,7 @@ public class AuthService {
             usuario.setFechaCodigo(new Timestamp(System.currentTimeMillis()));
             usuarioRepository.actualizar(usuario);
             emailService.enviarCorreo(correo, "Recuperacion de Credenciales",
-            emailService.codigoRecuperacion(codioRecuperacion));
+                    emailService.codigoRecuperacion(codioRecuperacion));
             System.out.print("Usuario en recuperacion");
             return true;
 
@@ -101,24 +101,25 @@ public class AuthService {
 
     }
 
-// Ya no es un campo de instancia
-// private final RolManage rolManage = new RolManage();  ← borrar
+    // Ya no es un campo de instancia
+    // private final RolManage rolManage = new RolManage(); ← borrar
 
-public boolean login(String correo, String password) {
-    try {
-        Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
-        if (usuario == null) return false;
+    public boolean login(String correo, String password) {
+        try {
+            Usuario usuario = usuarioRepository.buscarPorCorreo(correo);
+            if (usuario == null)
+                return false;
 
-        boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
-        if (res) {
-            RolManage.getInstance().setRol(usuario.getTipoUsuario()); // ← singleton
+            boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
+            if (res) {
+                RolManage.getInstance().setRol(usuario.getTipoUsuario()); // ← singleton
+            }
+            return res;
+
+        } catch (AppException e) {
+            throw new AppException("Error en login", e);
         }
-        return res;
-
-    } catch (AppException e) {
-        throw new AppException("Error en login", e);
     }
-}
 
     public boolean registro(Usuario usuario) {
         try {

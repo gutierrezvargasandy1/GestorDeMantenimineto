@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.utng.TecnicoModule.controller.DialogoActualizacionController"
+      spacing="14" prefWidth="620"
+      style="-fx-background-color: white;">
+    <padding><Insets top="20" right="24" bottom="6" left="24"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="🔄"
+               style="-fx-font-size: 15px;
+                      -fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);
+                      -fx-background-radius: 10; -fx-min-width: 36; -fx-min-height: 36;
+                      -fx-alignment: center;"/>
+        <VBox spacing="1">
+            <Label fx:id="lblTitulo" text="Registrar actualizacion"
+                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+            <Label text="Tabla registros_actualizaciones"
+                   style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="lblIdRegistro" text="nuevo"
+               style="-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: #6366f1;
+                      -fx-background-color: #eef2ff; -fx-background-radius: 16;
+                      -fx-padding: 5 11 5 11;"/>
+    </HBox>
+
+    <Region prefHeight="1" style="-fx-background-color: #eef1f5;"/>
+
+    <GridPane hgap="12" vgap="11">
+        <columnConstraints>
+            <ColumnConstraints minWidth="185" prefWidth="185"/>
+            <ColumnConstraints minWidth="355" prefWidth="355" hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="id_equipo *" GridPane.rowIndex="0" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <ComboBox fx:id="cmbEquipo" GridPane.rowIndex="0" GridPane.columnIndex="1"
+                  prefHeight="32" maxWidth="Infinity" promptText="Selecciona el equipo"
+                  style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                         -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
+
+        <Label text="tipo *" GridPane.rowIndex="1" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <ComboBox fx:id="cmbTipo" GridPane.rowIndex="1" GridPane.columnIndex="1"
+                  prefHeight="32" maxWidth="Infinity" promptText="Sistema operativo / Programa / ..."
+                  style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                         -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
+
+        <Label text="nombre_actualizado *" GridPane.rowIndex="2" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <TextField fx:id="txtNombre" GridPane.rowIndex="2" GridPane.columnIndex="1"
+                   prefHeight="32" promptText="Ej. Windows 11 Pro, Office, driver de red"
+                   style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                          -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                          -fx-font-size: 11.5px; -fx-padding: 0 11 0 11;"/>
+
+        <Label text="version_actual" GridPane.rowIndex="3" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <TextField fx:id="txtVersionActual" GridPane.rowIndex="3" GridPane.columnIndex="1"
+                   prefHeight="32" promptText="Version que tenia antes"
+                   style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                          -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                          -fx-font-size: 11.5px; -fx-padding: 0 11 0 11;"/>
+
+        <Label text="version_actualizada *" GridPane.rowIndex="4" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <TextField fx:id="txtVersionNueva" GridPane.rowIndex="4" GridPane.columnIndex="1"
+                   prefHeight="32" promptText="Version a la que quedo"
+                   style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                          -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                          -fx-font-size: 11.5px; -fx-padding: 0 11 0 11;"/>
+
+        <Label text="fecha *" GridPane.rowIndex="5" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <DatePicker fx:id="dpFecha" GridPane.rowIndex="5" GridPane.columnIndex="1"
+                    prefHeight="32" maxWidth="Infinity"
+                    style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                           -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
+
+        <Label text="id_usuario_responsable" GridPane.rowIndex="6" GridPane.columnIndex="0"
+               style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+        <Label fx:id="lblResponsable" text="-" GridPane.rowIndex="6" GridPane.columnIndex="1"
+               maxWidth="Infinity"
+               style="-fx-font-size: 11.5px; -fx-text-fill: #0f172a;
+                      -fx-background-color: #f1f5f9; -fx-background-radius: 7;
+                      -fx-padding: 8 11 8 11;"/>
+    </GridPane>
+
+    <Label fx:id="lblError" text="" wrapText="true" managed="false" visible="false"
+           style="-fx-font-size: 11px; -fx-text-fill: #b91c1c;
+                  -fx-background-color: #fef2f2; -fx-background-radius: 8;
+                  -fx-border-color: #fecaca; -fx-border-radius: 8;
+                  -fx-padding: 9 12 9 12;"/>
+
+    <Label text="Si el tipo es Sistema operativo tambien se refresca fecha_actualizacion del equipo."
+           wrapText="true"
+           style="-fx-font-size: 10.5px; -fx-text-fill: #64748b;"/>
+</VBox>

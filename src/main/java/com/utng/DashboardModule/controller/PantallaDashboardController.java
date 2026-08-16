@@ -644,12 +644,10 @@ public class PantallaDashboardController {
     @FXML
     private void nuevoMantenimiento() {
         System.out.println("Boton: Nuevo mantenimiento");
-        // TODO: abrir PantallaRegistroMantenimiento.fxml
     }
 
     @FXML
     private void verMantenimientos() {
         System.out.println("Boton: Ver mantenimientos");
-        // TODO: navegar al modulo de mantenimientos
     }
 }

@@ -7,14 +7,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import com.utng.EquipoModule.model.equipo.Equipo;
 import com.utng.EquipoModule.model.equipo.EstadoEquipo;
 import com.utng.EquipoModule.model.sistemaOperativo.SistemaOperativo;
 import com.utng.UserModule.model.usuario.TipoUsuario;
 import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.Navigator;
-
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

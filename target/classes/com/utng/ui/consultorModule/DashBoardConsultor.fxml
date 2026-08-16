@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.utng.ConsultorModule.Dashboard.PantallaConsultorController">
+
+    <!-- ══════════ CONTENIDO PRINCIPAL ══════════ -->
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                style="-fx-background-color: transparent; -fx-background: transparent;
+                       -fx-border-color: transparent;">
+
+        <VBox spacing="16"
+              style="-fx-background-color: linear-gradient(to bottom, #eef2f7 0%, #f7f8fa 320px);">
+            <padding>
+                <Insets top="20" right="30" bottom="20" left="30"/>
+            </padding>
+
+            <!-- ENCABEZADO -->
+            <HBox alignment="CENTER_LEFT" spacing="14">
+                <Button fx:id="btnMenu" text="☰" onAction="#toggleMenu"
+                        prefWidth="42" prefHeight="42"
+                        style="-fx-font-size: 17px; -fx-text-fill: #0f172a;
+                               -fx-background-color: white; -fx-background-radius: 10;
+                               -fx-border-color: #e2e8f0; -fx-border-radius: 10;
+                               -fx-cursor: hand;
+                               -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);"/>
+
+                <VBox spacing="1">
+                    <Label text="Consulta de Equipos CGTI"
+                           style="-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                    <Label text="CGTI - Inventario de equipos de computo en modo consulta"
+                           style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;"/>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- BADGE DE ROL / SOLO LECTURA -->
+                <Label text="Consultor - solo lectura"
+                       style="-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: #6366f1;
+                              -fx-background-color: #eef2ff; -fx-background-radius: 16;
+                              -fx-padding: 7 12 7 12;"/>
+
+                <Label fx:id="lblFechaHoy" text="Sabado, 16 de agosto"
+                       style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
+                              -fx-background-color: white; -fx-background-radius: 8;
+                              -fx-padding: 7 12 7 12;
+                              -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
+
+                <Button text="Exportar CSV"
+                        onAction="#exportarCSV"
+                        prefHeight="34"
+                        style="-fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
+                               -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;
+                               -fx-background-radius: 8; -fx-padding: 0 16 0 16; -fx-cursor: hand;
+                               -fx-effect: dropshadow(gaussian, rgba(29,78,216,0.35), 10, 0, 0, 3);"/>
+            </HBox>
+
+            <!-- TARJETAS KPI -->
+            <HBox spacing="12">
+                <!-- TOTAL -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="C" style="-fx-font-size: 12px; -fx-background-color: #eef2ff;
+                                           -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                           -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblTotalEquipos" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                        <Label text="Total de equipos"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- ACTIVOS -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="A" style="-fx-font-size: 12px; -fx-text-fill: #16a34a;
+                                          -fx-background-color: #dcfce7; -fx-background-radius: 8;
+                                          -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblEquiposActivos" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #16a34a;"/>
+                        <Label text="Activos"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- EN MANTENIMIENTO -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="M" style="-fx-font-size: 12px; -fx-background-color: #fef3c7;
+                                           -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                           -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblEnMantenimiento" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #f59e0b;"/>
+                        <Label text="En mantenimiento"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- DE BAJA -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="B" style="-fx-font-size: 12px; -fx-background-color: #fee2e2;
+                                           -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                           -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblEquiposBaja" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #dc2626;"/>
+                        <Label text="De baja"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+            </HBox>
+
+            <!-- ══════════ INVENTARIO DE EQUIPOS (SOLO LECTURA) ══════════ -->
+            <VBox spacing="12"
+                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
+                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);">
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Inventario de equipos"
+                           style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                    <Label text="Consulta"
+                           style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #64748b;
+                                  -fx-background-color: #f1f5f9; -fx-background-radius: 12;
+                                  -fx-padding: 3 9 3 9;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="txtBuscar" promptText="Buscar equipo, modelo, procesador..."
+                               prefWidth="230" prefHeight="30"
+                               onKeyReleased="#filtrarEquipos"
+                               style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                                      -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                                      -fx-font-size: 11.5px; -fx-padding: 0 10 0 10;"/>
+                    <ComboBox fx:id="cmbLugar" prefHeight="30" prefWidth="130"
+                              promptText="Todos los lugares" onAction="#filtrarEquipos"
+                              style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                                     -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
+                    <ComboBox fx:id="cmbSistemaOperativo" prefHeight="30" prefWidth="130"
+                              promptText="Todos los S.O." onAction="#filtrarEquipos"
+                              style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                                     -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
+                    <Button text="Limpiar" onAction="#limpiarFiltros"
+                            style="-fx-background-color: #eef2ff; -fx-text-fill: #1d4ed8;
+                                   -fx-font-weight: bold; -fx-font-size: 11.5px;
+                                   -fx-background-radius: 7; -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- CHIPS DE ESTADO -->
+                <HBox spacing="8">
+                    <Button fx:id="chipTodos" text="Todos" onAction="#filtrarPorEstado"
+                            style="-fx-background-color: #0f172a; -fx-text-fill: white; -fx-font-size: 11px;
+                                   -fx-font-weight: bold; -fx-background-radius: 16;
+                                   -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
+
+                    <HBox fx:id="chipActivos" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #f0fdf4; -fx-background-radius: 16;
+                                 -fx-border-color: #bbf7d0; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="A" style="-fx-text-fill: #16a34a; -fx-font-size: 10px;"/>
+                        <Label text="Activos" style="-fx-text-fill: #15803d; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoActivos" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #16a34a; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+
+                    <HBox fx:id="chipMantenimiento" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #fffbeb; -fx-background-radius: 16;
+                                 -fx-border-color: #fde68a; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="M" style="-fx-text-fill: #f59e0b; -fx-font-size: 10px;"/>
+                        <Label text="En mantenimiento" style="-fx-text-fill: #b45309; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoMantenimiento" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #f59e0b; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+
+                    <HBox fx:id="chipInactivos" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #f8fafc; -fx-background-radius: 16;
+                                 -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="I" style="-fx-text-fill: #6b7280; -fx-font-size: 10px;"/>
+                        <Label text="Inactivos" style="-fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoInactivos" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #6b7280; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+
+                    <HBox fx:id="chipBaja" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #fef2f2; -fx-background-radius: 16;
+                                 -fx-border-color: #fecaca; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="B" style="-fx-text-fill: #dc2626; -fx-font-size: 10px;"/>
+                        <Label text="De baja" style="-fx-text-fill: #b91c1c; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoBaja" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #dc2626; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+                </HBox>
+
+                <!-- TABLA: SOLO LECTURA, editable=false -->
+                <TableView fx:id="tablaEquipos" prefHeight="260" editable="false"
+                           style="-fx-background-color: transparent; -fx-border-color: #eef1f5;
+                                  -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 11.5px;">
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="5">
+                            <Label text="No hay equipos que coincidan con el filtro"
+                                   style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+                        </VBox>
+                    </placeholder>
+                    <columns>
+                        <TableColumn fx:id="colId"                   text="id"                     prefWidth="60"/>
+                        <TableColumn fx:id="colEquipos"              text="equipos"                prefWidth="150"/>
+                        <TableColumn fx:id="colModelo"               text="modelo"                 prefWidth="140"/>
+                        <TableColumn fx:id="colProcesador"           text="procesador"             prefWidth="160"/>
+                        <TableColumn fx:id="colMemoriaRam"           text="memoria_ram"            prefWidth="105"/>
+                        <TableColumn fx:id="colAlmacenamiento"       text="almacenamiento"         prefWidth="120"/>
+                        <TableColumn fx:id="colSistemaOperativo"     text="id_sistema_operativo"   prefWidth="140"/>
+                        <TableColumn fx:id="colLugar"                text="lugar"                  prefWidth="140"/>
+                        <TableColumn fx:id="colEstado"               text="estado"                 prefWidth="130"/>
+                        <TableColumn fx:id="colAnioCreacion"         text="anio_creacion"          prefWidth="100"/>
+                        <TableColumn fx:id="colUsuarioResponsable"   text="id_usuario_responsable" prefWidth="150"/>
+                        <TableColumn fx:id="colFechaCreacion"        text="fecha_creacion"         prefWidth="120"/>
+                        <TableColumn fx:id="colFechaActualizacion"   text="fecha_actualizacion"    prefWidth="135"/>
+                    </columns>
+                </TableView>
+
+                <!-- PIE DE TABLA -->
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label fx:id="lblConteo" text="Mostrando 0 de 0 equipos"
+                           style="-fx-font-size: 11px; -fx-text-fill: #94a3b8;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Ver detalle" onAction="#verDetalle"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569;
+                                   -fx-font-weight: bold; -fx-font-size: 11.5px;
+                                   -fx-background-radius: 7; -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                                   -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
+                    <Button fx:id="btnReportar" text="Reportar al tecnico" onAction="#reportarEquipo"
+                            style="-fx-background-color: linear-gradient(to bottom right, #f59e0b, #d97706);
+                                   -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11.5px;
+                                   -fx-background-radius: 7; -fx-padding: 7 14 7 14; -fx-cursor: hand;
+                                   -fx-effect: dropshadow(gaussian, rgba(217,119,6,0.35), 10, 0, 0, 3);"/>
+                </HBox>
+            </VBox>
+
+            <!-- ══════════ CHAT CON SOPORTE TECNICO ══════════ -->
+            <VBox spacing="12"
+                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
+                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);">
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Chat con soporte tecnico"
+                           style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblEstadoConexion" text="En linea"
+                           style="-fx-text-fill: #16a34a; -fx-font-size: 10.5px; -fx-font-weight: bold;
+                                  -fx-background-color: #f0fdf4; -fx-background-radius: 16;
+                                  -fx-padding: 5 10 5 10;"/>
+                    <Button text="Limpiar" onAction="#limpiarChat"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #64748b; -fx-font-size: 11px;
+                                   -fx-background-radius: 7; -fx-padding: 6 11 6 11; -fx-cursor: hand;"/>
+                </HBox>
+
+                <HBox spacing="14">
+
+                    <!-- LISTA DE TECNICOS -->
+                    <VBox spacing="8" prefWidth="268" minWidth="268" maxWidth="268">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="Tecnicos disponibles"
+                                   style="-fx-font-size: 11.5px; -fx-font-weight: bold; -fx-text-fill: #475569;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblTotalTecnicos" text="0"
+                                   style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                          -fx-background-color: #6366f1; -fx-background-radius: 9;
+                                          -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 6 1 6;"/>
+                        </HBox>
+
+                        <TextField fx:id="txtBuscarTecnico" promptText="Buscar tecnico..."
+                                   prefHeight="30" onKeyReleased="#filtrarTecnicos"
+                                   style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                                          -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                                          -fx-font-size: 11.5px; -fx-padding: 0 10 0 10;"/>
+
+                        <ListView fx:id="listaTecnicos" prefHeight="292" minHeight="292" maxHeight="292"
+                                  style="-fx-background-color: #f8fafc; -fx-background: #f8fafc;
+                                         -fx-background-radius: 8; -fx-border-color: #eef1f5;
+                                         -fx-border-radius: 8; -fx-font-size: 11.5px;"/>
+                    </VBox>
+
+                    <!-- CONVERSACION -->
+                    <VBox spacing="10" HBox.hgrow="ALWAYS">
+
+                        <!-- CABECERA DE LA CONVERSACION -->
+                        <HBox fx:id="cabeceraChat" alignment="CENTER_LEFT" spacing="10"
+                              style="-fx-background-color: #f8fafc; -fx-background-radius: 8;
+                                     -fx-border-color: #eef1f5; -fx-border-radius: 8;
+                                     -fx-padding: 9 12 9 12;">
+                            <Label fx:id="lblAvatarTecnico" text="--"
+                                   style="-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: white;
+                                          -fx-background-color: #6366f1; -fx-background-radius: 14;
+                                          -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+                            <VBox spacing="1">
+                                <Label fx:id="lblNombreTecnico" text="Selecciona un tecnico"
+                                       style="-fx-font-size: 12.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                                <Label fx:id="lblAreaTecnico" text="Elige a quien reportar desde la lista"
+                                       style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                            </VBox>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblEquipoContexto" text="Sin equipo seleccionado"
+                                   style="-fx-font-size: 10.5px; -fx-text-fill: #b45309;
+                                          -fx-background-color: #fffbeb; -fx-background-radius: 16;
+                                          -fx-border-color: #fde68a; -fx-border-radius: 16;
+                                          -fx-padding: 5 10 5 10;"/>
+                        </HBox>
+
+                        <ScrollPane fx:id="scrollChat" fitToWidth="true" hbarPolicy="NEVER"
+                                    prefHeight="230" minHeight="230" maxHeight="230"
+                                    style="-fx-background-color: #f8fafc; -fx-background: #f8fafc;
+                                           -fx-background-radius: 8; -fx-border-color: #eef1f5; -fx-border-radius: 8;">
+                            <VBox fx:id="contenedorChat" spacing="12" style="-fx-background-color: transparent;">
+                                <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            </VBox>
+                        </ScrollPane>
+
+                        <!-- SUGERENCIAS RAPIDAS -->
+                        <HBox spacing="8">
+                            <Button text="El equipo no enciende" onAction="#usarSugerencia"
+                                    style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                           -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                           -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                            <Button text="Falla de red" onAction="#usarSugerencia"
+                                    style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                           -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                           -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                            <Button text="Solicitar mas memoria RAM" onAction="#usarSugerencia"
+                                    style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                           -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                           -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                            <Button text="Software no instalado" onAction="#usarSugerencia"
+                                    style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                           -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                           -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                        </HBox>
+
+                        <!-- ENTRADA -->
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <TextField fx:id="txtMensaje" HBox.hgrow="ALWAYS" prefHeight="36"
+                                       promptText="Escribe tu reporte... (ej. el equipo PC-LAB-014 no enciende)"
+                                       onAction="#enviarMensaje"
+                                       style="-fx-background-color: #f4f6fa; -fx-background-radius: 8;
+                                              -fx-border-color: #e2e8f0; -fx-border-radius: 8;
+                                              -fx-font-size: 11.5px; -fx-padding: 0 12 0 12;"/>
+                            <Button fx:id="btnEnviar" text="Enviar" onAction="#enviarMensaje" prefHeight="36"
+                                    style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);
+                                           -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11.5px;
+                                           -fx-background-radius: 8; -fx-padding: 0 16 0 16; -fx-cursor: hand;
+                                           -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.35), 10, 0, 0, 3);"/>
+                        </HBox>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+
+    <!-- OVERLAY OSCURO -->
+    <Region fx:id="overlayMenu" visible="false" managed="false"
+            onMouseClicked="#toggleMenu"
+            style="-fx-background-color: rgba(15,23,42,0.45);"/>
+
+    <!-- ══════════ MENU LATERAL (HAMBURGUESA) - REDUCIDO PARA CONSULTOR ══════════ -->
+    <VBox fx:id="panelMenu" visible="false" managed="false"
+          prefWidth="260" maxWidth="260"
+          StackPane.alignment="CENTER_LEFT"
+          spacing="6"
+          style="-fx-background-color: #0f172a; -fx-padding: 24 16 24 16;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 20, 0, 4, 0);">
+
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="🖥"
+                   style="-fx-font-size: 16px;
+                          -fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
+                          -fx-background-radius: 10; -fx-min-width: 38; -fx-min-height: 38;
+                          -fx-alignment: center;"/>
+            <VBox spacing="1">
+                <Label text="CGTI" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Label text="Panel de consulta" style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="✕" onAction="#toggleMenu"
+                    style="-fx-background-color: transparent; -fx-text-fill: #94a3b8;
+                           -fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 4 8 4 8;"/>
+        </HBox>
+
+        <Region prefHeight="14"/>
+
+        <Button fx:id="btnMenuEquipos" text="🖥  Equipos" onAction="#irAEquipos"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
+                       -fx-font-weight: bold; -fx-background-radius: 9;
+                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
+
+
+        <Region prefHeight="10"/>
+
+        <Label text="Tu rol no permite crear ni editar registros."
+               wrapText="true" maxWidth="228"
+               style="-fx-font-size: 10.5px; -fx-text-fill: #64748b;
+                      -fx-background-color: #1e293b; -fx-background-radius: 9;
+                      -fx-padding: 10 12 10 12;"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Button text="⏻  Cerrar sesión" onAction="#cerrarSesion"
+                maxWidth="Infinity" alignment="CENTER_LEFT"
+                style="-fx-background-color: transparent; -fx-text-fill: #f87171; -fx-font-size: 12.5px;
+                       -fx-background-radius: 9; -fx-padding: 10 14 10 14; -fx-cursor: hand;"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="10"
+              style="-fx-border-color: #1e293b; -fx-border-width: 1 0 0 0; -fx-padding: 14 0 0 0;">
+            <Label fx:id="lblAvatarUsuario" text="GE"
+                   style="-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: white;
+                          -fx-background-color: #334155; -fx-background-radius: 14;
+                          -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+            <VBox spacing="1">
+                <Label fx:id="lblNombreUsuario" text="Gerardo"
+                       style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Label fx:id="lblRolUsuario" text="Consultor CGTI"
+                       style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
+            </VBox>
+        </HBox>
+    </VBox>
+
+</StackPane>

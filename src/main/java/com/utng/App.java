@@ -1,6 +1,8 @@
 package com.utng;
 
+import com.mongodb.client.MongoDatabase;
 import com.utng.config.ConectionDB;
+import com.utng.config.MongoDBConnection;
 import com.utng.util.Navigator;
 
 import javafx.application.Application;
@@ -14,6 +16,9 @@ public class App extends Application {
         Navigator.navigate(
                 "/com/utng/ui/Auth/pantallaLogin/PantallaLogin.fxml");
         ConectionDB.conectar();
+        MongoDatabase database = MongoDBConnection.getDatabase();
+        System.out.println(
+                "Base de datos: " + database.getName());
 
     }
 
