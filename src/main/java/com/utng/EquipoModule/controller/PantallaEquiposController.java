@@ -932,17 +932,6 @@ public class PantallaEquiposController {
         catalogoResponsables.addAll(usuarioRepository.obtenerTodos());
     }
 
-    private Usuario responsable(Long id, String nombre, String paterno, String materno, TipoUsuario tipo) {
-        Usuario u = new Usuario();
-        u.setIdUsuario(id);
-        u.setNombreCompleto(nombre);
-        u.setApellidoPaterno(paterno);
-        u.setApellidoMaterno(materno);
-        u.setTipoUsuario(tipo);
-        u.setActivo(true);
-        return u;
-    }
-
     private static Usuario crearResponsableVacio() {
         Usuario u = new Usuario();
         u.setIdUsuario(null);
@@ -957,35 +946,6 @@ public class PantallaEquiposController {
     // ============================================================
     private void cargarEquiposDesdeBD() {
         datos.setAll(equipoRepository.obtenerTodos());
-    }
-
-    private Equipo crear(Long id, String modelo, String lugar, String procesador, String ram,
-            String almacenamiento, Short anio, EstadoEquipo estado, Long idSo, Long idResponsable,
-            LocalDateTime alta) {
-
-        Equipo e = new Equipo();
-        e.setIdEquipo(id);
-        e.setModelo(modelo);
-        e.setLugar(lugar);
-        e.setProcesador(procesador);
-        e.setMemoriaRam(ram);
-        e.setAlmacenamiento(almacenamiento);
-        e.setAnioCreacion(anio);
-        e.setEstado(estado);
-        e.setIdSistemaOperativo(idSo);
-        e.setIdUsuarioResponsable(idResponsable);
-        e.setFechaCreacion(Timestamp.valueOf(alta));
-        e.setFechaActualizacion(Timestamp.valueOf(alta));
-        return e;
-    }
-
-    private Long siguienteId() {
-        long max = datos.stream()
-                .filter(e -> e.getIdEquipo() != null)
-                .mapToLong(Equipo::getIdEquipo)
-                .max()
-                .orElse(0L);
-        return max + 1;
     }
 
     // ============================================================

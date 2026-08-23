@@ -399,51 +399,7 @@
                         </VBox>
                     </Tab>
 
-                    <!-- ─────────── TAB: PROGRAMAS ─────────── -->
-                    <Tab text="  Programas instalados  ">
-                        <VBox spacing="12">
-                            <padding><Insets top="14" right="8" bottom="4" left="8"/></padding>
-
-                            <HBox alignment="CENTER_LEFT" spacing="10">
-                                <Label text="equipos_programas"
-                                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                                <Region HBox.hgrow="ALWAYS"/>
-                                <TextField fx:id="txtBuscarProg" promptText="Buscar programa o equipo..."
-                                           prefWidth="240" prefHeight="30" onKeyReleased="#filtrarProgramas"
-                                           style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
-                                                  -fx-border-color: #e2e8f0; -fx-border-radius: 7;
-                                                  -fx-font-size: 11.5px; -fx-padding: 0 10 0 10;"/>
-                            </HBox>
-
-                            <TableView fx:id="tablaProgramas" prefHeight="285"
-                                       style="-fx-background-color: transparent; -fx-border-color: #eef1f5;
-                                              -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 11.5px;">
-                                <placeholder>
-                                    <Label text="Sin programas registrados"
-                                           style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
-                                </placeholder>
-                                <columns>
-                                    <TableColumn fx:id="pgId"        text="id"                prefWidth="60"/>
-                                    <TableColumn fx:id="pgIdEquipo"  text="id_equipo"         prefWidth="90"/>
-                                    <TableColumn fx:id="pgEquipo"    text="equipo"            prefWidth="160"/>
-                                    <TableColumn fx:id="pgIdPrograma" text="id_programa"      prefWidth="100"/>
-                                    <TableColumn fx:id="pgNombre"    text="nombre"            prefWidth="230"/>
-                                    <TableColumn fx:id="pgVersion"   text="version_actual"    prefWidth="130"/>
-                                    <TableColumn fx:id="pgFecha"     text="fecha_instalacion" prefWidth="130"/>
-                                </columns>
-                            </TableView>
-
-                            <HBox alignment="CENTER_LEFT" spacing="10">
-                                <Label fx:id="lblConteoProg" text="0 programas"
-                                       style="-fx-font-size: 11px; -fx-text-fill: #94a3b8;"/>
-                                <Region HBox.hgrow="ALWAYS"/>
-                                <Button text="Actualizar este programa" onAction="#actualizarPrograma"
-                                        style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);
-                                               -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11.5px;
-                                               -fx-background-radius: 7; -fx-padding: 7 14 7 14; -fx-cursor: hand;"/>
-                            </HBox>
-                        </VBox>
-                    </Tab>
+                    
 
                     <!-- ─────────── TAB: HISTORIAL ─────────── -->
                     <Tab text="  Historial  ">
@@ -664,10 +620,7 @@
                 style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
                        -fx-background-radius: 9; -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button text="📦  Programas instalados" onAction="#irAProgramas"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9; -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
 
         <Button text="🕘  Historial" onAction="#irAHistorial"
                 maxWidth="Infinity" alignment="CENTER_LEFT"

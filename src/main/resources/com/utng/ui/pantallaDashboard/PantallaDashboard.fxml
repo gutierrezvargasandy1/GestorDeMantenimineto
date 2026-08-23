@@ -376,8 +376,10 @@
                           -fx-background-color: #334155; -fx-background-radius: 14;
                           -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
             <VBox spacing="1">
-                <Label text="Gerardo" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label text="Técnico CGTI" style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
+                <Label fx:id="lblNombreUsuario" text="Gerardo Espindola"
+                       style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Label fx:id="lblRolUsuario" text="Técnico CGTI"
+                       style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
             </VBox>
         </HBox>
     </VBox>

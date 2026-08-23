@@ -12,10 +12,13 @@ import java.util.Optional;
 
 import com.utng.ActualizacionModule.model.actualizacion.RegistroActualizacion;
 import com.utng.ActualizacionModule.model.actualizacion.TipoActualizacion;
+import com.utng.ActualizacionModule.repository.ActualizacionRepository;
 import com.utng.EquipoModule.model.equipo.Equipo;
 import com.utng.EquipoModule.model.equipo.EstadoEquipo;
 import com.utng.EquipoModule.model.sistemaOperativo.SistemaOperativo;
-import com.utng.UserModule.model.usuario.TipoUsuario;
+import com.utng.EquipoModule.repository.EquipoRepository;
+import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
+import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.Navigator;
 
@@ -87,6 +90,10 @@ public class PantallaActualizacionesController {
     private static final String CAMPO_TODOS = "Todos los campos";
     private static final String TIPO_TODOS = "Todos los tipos";
     private static final String EQUIPO_TODOS = "Todos los equipos";
+    private final ActualizacionRepository actualizacionRepository = new ActualizacionRepository();
+    private final EquipoRepository equipoRepository = new EquipoRepository();
+    private final SistemaOperativoRepository sistemaOperativoRepository = new SistemaOperativoRepository();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     private static final String PERIODO_TODOS = "Todos los periodos";
     private static final String PERIODO_30_DIAS = "Últimos 30 días";
@@ -99,7 +106,9 @@ public class PantallaActualizacionesController {
     // ============================================================
     /** registros_actualizaciones.nombre_actualizado VARCHAR(150) */
     private static final int MAX_NOMBRE = 150;
-    /** registros_actualizaciones.version_actual / version_actualizada VARCHAR(50) */
+    /**
+     * registros_actualizaciones.version_actual / version_actualizada VARCHAR(50)
+     */
     private static final int MAX_VERSION = 50;
 
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -219,7 +228,7 @@ public class PantallaActualizacionesController {
         cargarCatalogos(); // TODO BD: equipoRepository / usuarioRepository / sistemaOperativoRepository
         configurarTabla();
         configurarFiltros();
-        cargarDatosEstaticos(); // TODO BD: actualizacionRepository.obtenerTodos()
+        cargarDatosDesdeBD();
         refrescarCombosDeFiltro();
         aplicarFiltros();
         cargarEstadisticas();
@@ -588,11 +597,7 @@ public class PantallaActualizacionesController {
         Optional<RegistroActualizacion> resultado = abrirFormulario(null);
 
         resultado.ifPresent(nueva -> {
-            // TODO BD: actualizacionRepository.guardar(nueva);
-            // INSERT INTO registros_actualizaciones
-            // (id_equipo, tipo, fecha, nombre_actualizado, version_actual, version_actualizada)
-            // VALUES (?,?,?,?,?,?)
-            nueva.setIdActualizacion(siguienteId());
+            actualizacionRepository.guardar(nueva); // asigna el id real de la BD
             datos.add(nueva);
 
             refrescar();
@@ -622,9 +627,7 @@ public class PantallaActualizacionesController {
         Optional<RegistroActualizacion> resultado = abrirFormulario(actualizacion);
 
         resultado.ifPresent(modificada -> {
-            // TODO BD: actualizacionRepository.actualizar(modificada);
-            // UPDATE registros_actualizaciones SET id_equipo=?, tipo=?, fecha=?,
-            // nombre_actualizado=?, version_actual=?, version_actualizada=? WHERE id=?
+            actualizacionRepository.actualizar(modificada);
             refrescar();
             tablaActualizaciones.getSelectionModel().select(modificada);
             info("Cambios guardados",
@@ -660,9 +663,7 @@ public class PantallaActualizacionesController {
                         + "registro. El equipo NO se elimina.");
 
         if (confirmado) {
-            // TODO BD:
-            // actualizacionRepository.eliminar(actualizacion.getIdActualizacion());
-            // DELETE FROM registros_actualizaciones WHERE id = ?
+            actualizacionRepository.eliminar(actualizacion.getIdActualizacion());
             datos.remove(actualizacion);
             refrescar();
             info("Actualización eliminada",
@@ -1082,92 +1083,15 @@ public class PantallaActualizacionesController {
         actualizarEstadoBotones();
     }
 
-    // ============================================================
-    // CATÁLOGOS ESTÁTICOS (sustituir por la BD más adelante)
-    // ============================================================
     private void cargarCatalogos() {
+        catalogoSistemasOperativos.clear();
+        catalogoSistemasOperativos.addAll(sistemaOperativoRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, tipo, nombre, version_actual FROM sistemas_operativos
-        catalogoSistemasOperativos.addAll(List.of(
-                new SistemaOperativo(1L, "escritorio", "Windows 11 Pro", "23H2"),
-                new SistemaOperativo(2L, "escritorio", "Windows 10 Pro", "22H2"),
-                new SistemaOperativo(3L, "servidor", "Windows Server", "2019"),
-                new SistemaOperativo(4L, "escritorio", "Ubuntu", "22.04 LTS"),
-                new SistemaOperativo(5L, "escritorio", "Debian", "12"),
-                new SistemaOperativo(6L, "escritorio", "Fedora", "40"),
-                new SistemaOperativo(7L, "escritorio", "macOS Sonoma", "14.5")));
+        catalogoResponsables.clear();
+        catalogoResponsables.addAll(usuarioRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, nombre_completo, ... FROM usuarios WHERE activo = TRUE
-        catalogoResponsables.addAll(List.of(
-                responsable(1L, "Gerardo", "Espíndola", "Ramírez", TipoUsuario.ADMINISTRADOR),
-                responsable(2L, "Luis Ángel", "Ortega", "Mendoza", TipoUsuario.TECNICO),
-                responsable(3L, "Karla", "Núñez", "Salinas", TipoUsuario.TECNICO),
-                responsable(4L, "Diego", "Salas", "Ibarra", TipoUsuario.TECNICO),
-                responsable(5L, "Ana Sofía", "Ramírez", "Cortés", TipoUsuario.CONSULTA),
-                responsable(6L, "Jorge", "Medina", "Aguilar", TipoUsuario.CONSULTA),
-                responsable(7L, "Mariana", "Beltrán", "Ochoa", TipoUsuario.ADMINISTRADOR),
-                responsable(11L, "Fernanda", "Zamora", "Ríos", TipoUsuario.TECNICO)));
-
-        // TODO BD: SELECT * FROM equipos
-        catalogoEquipos.addAll(List.of(
-                equipo(1L, "HP ProDesk 400 G7", "Laboratorio de Redes", "Intel Core i5-10500",
-                        "16GB", "512GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L),
-                equipo(2L, "Dell OptiPlex 3080", "Laboratorio de Redes", "Intel Core i5-10505",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L),
-                equipo(3L, "Lenovo ThinkCentre M75q", "Laboratorio de Software", "AMD Ryzen 5 4600GE",
-                        "16GB", "1TB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 3L),
-                equipo(4L, "HP EliteDesk 800 G4", "Laboratorio de Software", "Intel Core i7-8700",
-                        "32GB", "1TB SSD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 3L),
-                equipo(5L, "Dell Latitude 5420", "Dirección Académica", "Intel Core i7-1165G7",
-                        "16GB", "512GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 7L),
-                equipo(6L, "Lenovo ThinkPad E14", "Control Escolar", "AMD Ryzen 5 5500U",
-                        "8GB", "256GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 2L, 6L),
-                equipo(7L, "HP ProDesk 600 G6", "Control Escolar", "Intel Core i5-10500",
-                        "8GB", "1TB HDD", (short) 2020, EstadoEquipo.INACTIVO, 2L, 6L),
-                equipo(8L, "Dell PowerEdge T40", "Site CGTI", "Intel Xeon E-2224G",
-                        "32GB", "2TB HDD", (short) 2020, EstadoEquipo.ACTIVO, 3L, 1L),
-                equipo(9L, "Acer Veriton X2660G", "Biblioteca", "Intel Core i3-9100",
-                        "8GB", "500GB HDD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 4L),
-                equipo(10L, "HP 280 Pro G6", "Biblioteca", "Intel Core i3-10100",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 4L),
-                equipo(11L, "Dell OptiPlex 7010", "Laboratorio de Cómputo 1", "Intel Core i5-3470",
-                        "4GB", "500GB HDD", (short) 2013, EstadoEquipo.DE_BAJA, 2L, null),
-                equipo(12L, "Lenovo ThinkCentre M720q", "Laboratorio de Cómputo 1", "Intel Core i5-9400T",
-                        "16GB", "512GB SSD", (short) 2020, EstadoEquipo.ACTIVO, 4L, 11L),
-                equipo(13L, "Apple MacBook Air M1", "Diseño Multimedia", "Apple M1",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 7L, 5L),
-                equipo(14L, "HP Compaq Pro 6300", "Almacén CGTI", "Intel Core i3-3220",
-                        "4GB", "320GB HDD", (short) 2012, EstadoEquipo.DE_BAJA, null, null),
-                equipo(15L, "Dell Vostro 3681", "Recursos Humanos", "Intel Core i5-10400",
-                        "8GB", "1TB HDD", (short) 2021, EstadoEquipo.INACTIVO, 2L, 7L)));
-    }
-
-    private Equipo equipo(Long id, String modelo, String lugar, String procesador, String ram,
-            String almacenamiento, Short anio, EstadoEquipo estado, Long idSo, Long idResponsable) {
-
-        Equipo e = new Equipo();
-        e.setIdEquipo(id);
-        e.setModelo(modelo);
-        e.setLugar(lugar);
-        e.setProcesador(procesador);
-        e.setMemoriaRam(ram);
-        e.setAlmacenamiento(almacenamiento);
-        e.setAnioCreacion(anio);
-        e.setEstado(estado);
-        e.setIdSistemaOperativo(idSo);
-        e.setIdUsuarioResponsable(idResponsable);
-        return e;
-    }
-
-    private Usuario responsable(Long id, String nombre, String paterno, String materno, TipoUsuario tipo) {
-        Usuario u = new Usuario();
-        u.setIdUsuario(id);
-        u.setNombreCompleto(nombre);
-        u.setApellidoPaterno(paterno);
-        u.setApellidoMaterno(materno);
-        u.setTipoUsuario(tipo);
-        u.setActivo(true);
-        return u;
+        catalogoEquipos.clear();
+        catalogoEquipos.addAll(equipoRepository.obtenerTodos());
     }
 
     private static Equipo crearEquipoVacio() {
@@ -1178,111 +1102,8 @@ public class PantallaActualizacionesController {
         return e;
     }
 
-    // ============================================================
-    // DATOS ESTÁTICOS (sustituir por la BD más adelante)
-    // ============================================================
-    private void cargarDatosEstaticos() {
-        // TODO BD: SELECT id, id_equipo, tipo, fecha, nombre_actualizado,
-        // version_actual, version_actualizada FROM registros_actualizaciones
-        // ORDER BY fecha DESC
-        List<RegistroActualizacion> demo = List.of(
-                crear(1L, 1L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2026, 2, 10, 9, 15),
-                        "Windows 11 Pro", "22H2", "23H2"),
-                crear(2L, 1L, TipoActualizacion.DRIVER,
-                        LocalDateTime.of(2026, 5, 4, 11, 0),
-                        "Driver de red Realtek RTL8168", "10.50.826.2021", "10.62.1120.2024"),
-                crear(3L, 2L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2026, 1, 22, 8, 40),
-                        "Windows 11 Pro", "22H2", "23H2"),
-                crear(4L, 2L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 6, 18, 13, 25),
-                        "Google Chrome", "124.0.6367.91", "127.0.6533.72"),
-                crear(5L, 3L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 3, 14, 10, 5),
-                        "Visual Studio Code", "1.88.1", "1.92.0"),
-                crear(6L, 3L, TipoActualizacion.FIRMWARE,
-                        LocalDateTime.of(2026, 7, 2, 16, 30),
-                        "BIOS Lenovo M2JKT4AA", "1.34", "1.41"),
-                crear(7L, 4L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2025, 11, 19, 9, 50),
-                        "Windows 10 Pro", "21H2", "22H2"),
-                crear(8L, 4L, TipoActualizacion.DRIVER,
-                        LocalDateTime.of(2026, 4, 8, 12, 10),
-                        "Driver de video Intel UHD 630", "31.0.101.2111", "31.0.101.5333"),
-                crear(9L, 5L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 5, 27, 15, 45),
-                        "Microsoft Office", "2019", "2021"),
-                crear(10L, 5L, TipoActualizacion.FIRMWARE,
-                        LocalDateTime.of(2026, 1, 8, 8, 20),
-                        "BIOS Dell Latitude 5420", "1.21.0", "1.33.0"),
-                crear(11L, 6L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2026, 6, 30, 10, 35),
-                        "Windows 10 Pro", "21H2", "22H2"),
-                crear(12L, 7L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2025, 9, 16, 14, 0),
-                        "Adobe Acrobat Reader", "23.006.20380", "24.002.20857"),
-                crear(13L, 8L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2026, 2, 27, 7, 15),
-                        "Windows Server", "2016", "2019"),
-                crear(14L, 8L, TipoActualizacion.FIRMWARE,
-                        LocalDateTime.of(2026, 7, 21, 18, 5),
-                        "Firmware controladora PERC H330", "25.5.9.0001", "25.5.10.0002"),
-                crear(15L, 9L, TipoActualizacion.DRIVER,
-                        LocalDateTime.of(2026, 7, 9, 12, 40),
-                        "Driver de video NVIDIA GT 1030", "537.13", "560.81"),
-                crear(16L, 10L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 4, 23, 11, 30),
-                        "Mozilla Firefox", "125.0.3", "129.0"),
-                crear(17L, 11L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2025, 6, 5, 9, 0),
-                        "Windows 10 Pro", "20H2", "21H2"),
-                crear(18L, 12L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2026, 3, 2, 8, 55),
-                        "Ubuntu", "20.04 LTS", "22.04 LTS"),
-                crear(19L, 12L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 8, 4, 10, 20),
-                        "LibreOffice", "7.6.7", "24.2.5"),
-                crear(20L, 13L, TipoActualizacion.SISTEMA_OPERATIVO,
-                        LocalDateTime.of(2026, 7, 28, 17, 35),
-                        "macOS Sonoma", "14.4.1", "14.5"),
-                crear(21L, 13L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 8, 7, 9, 10),
-                        "Xcode", "15.3", "15.4"),
-                crear(22L, 15L, TipoActualizacion.DRIVER,
-                        LocalDateTime.of(2026, 6, 11, 13, 50),
-                        "Driver de impresora HP LaserJet Pro", "40.15.1153", "41.3.2653"),
-                crear(23L, 6L, TipoActualizacion.PROGRAMA,
-                        LocalDateTime.of(2026, 8, 10, 11, 5),
-                        "7-Zip", "23.01", "24.07"),
-                crear(24L, 10L, TipoActualizacion.FIRMWARE,
-                        LocalDateTime.of(2025, 12, 3, 15, 15),
-                        "BIOS HP 280 Pro G6", "F.10", "F.22"));
-
-        datos.setAll(demo);
-    }
-
-    private RegistroActualizacion crear(Long id, Long idEquipo, TipoActualizacion tipo,
-            LocalDateTime fecha, String nombre, String versionActual, String versionNueva) {
-
-        RegistroActualizacion a = new RegistroActualizacion();
-        a.setIdActualizacion(id);
-        a.setIdEquipo(idEquipo);
-        a.setTipo(tipo);
-        a.setFecha(Timestamp.valueOf(fecha));
-        a.setNombreActualizado(nombre);
-        a.setVersionActual(versionActual);
-        a.setVersionActualizada(versionNueva);
-        return a;
-    }
-
-    private Long siguienteId() {
-        long max = datos.stream()
-                .filter(a -> a.getIdActualizacion() != null)
-                .mapToLong(RegistroActualizacion::getIdActualizacion)
-                .max()
-                .orElse(0L);
-        return max + 1;
+    private void cargarDatosDesdeBD() {
+        datos.setAll(actualizacionRepository.obtenerTodos());
     }
 
     // ============================================================
@@ -1527,7 +1348,7 @@ public class PantallaActualizacionesController {
     // ============================================================
     // UTILIDADES DE DATOS
     // ============================================================
-    /** "22H2  →  23H2", o solo la versión nueva si no se registró la anterior. */
+    /** "22H2 → 23H2", o solo la versión nueva si no se registró la anterior. */
     private static String cambioDeVersion(RegistroActualizacion a) {
         String anterior = texto(a.getVersionActual()).trim();
         String nueva = texto(a.getVersionActualizada()).trim();

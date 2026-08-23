@@ -17,7 +17,7 @@ import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.chatModule.model.Chat;
 import com.utng.chatModule.model.Mensaje;
 import com.utng.chatModule.service.ChatService;
-
+import com.utng.util.Navigator;
 import com.utng.util.SesionManager;
 
 import org.bson.types.ObjectId;
@@ -149,17 +149,6 @@ public class PantallaTecnicoController {
     @FXML
     private Label lblConteoAct;
 
-    // ───────────── TAB PROGRAMAS ─────────────
-    @FXML
-    private TextField txtBuscarProg;
-    @FXML
-    private TableView<EquipoPrograma> tablaProgramas;
-    @FXML
-    private TableColumn<EquipoPrograma, String> pgId, pgIdEquipo, pgEquipo, pgIdPrograma,
-            pgNombre, pgVersion, pgFecha;
-    @FXML
-    private Label lblConteoProg;
-
     // ───────────── TAB HISTORIAL ─────────────
     @FXML
     private TextField txtBuscarHist;
@@ -209,14 +198,12 @@ public class PantallaTecnicoController {
     private final ObservableList<Equipo> equipos = FXCollections.observableArrayList();
     private final ObservableList<RegistroMantenimiento> mantenimientos = FXCollections.observableArrayList();
     private final ObservableList<RegistroActualizacion> actualizaciones = FXCollections.observableArrayList();
-    private final ObservableList<EquipoPrograma> programas = FXCollections.observableArrayList();
     private final ObservableList<HistorialRegistro> historial = FXCollections.observableArrayList();
     private final ObservableList<UsuarioChat> consultores = FXCollections.observableArrayList();
 
     private FilteredList<Equipo> fEquipos;
     private FilteredList<RegistroMantenimiento> fMantenimientos;
     private FilteredList<RegistroActualizacion> fActualizaciones;
-    private FilteredList<EquipoPrograma> fProgramas;
     private FilteredList<HistorialRegistro> fHistorial;
     private FilteredList<UsuarioChat> fConsultores;
 
@@ -251,7 +238,6 @@ public class PantallaTecnicoController {
         configurarTablaEquipos();
         configurarTablaMantenimientos();
         configurarTablaActualizaciones();
-        configurarTablaProgramas();
         configurarTablaHistorial();
         configurarListaConsultores();
         cargarEquiposDesdeBD();
@@ -434,16 +420,6 @@ public class PantallaTecnicoController {
         });
     }
 
-    private void configurarTablaProgramas() {
-        pgId.setCellValueFactory(c -> txt(c.getValue().getId()));
-        pgIdEquipo.setCellValueFactory(c -> txt(c.getValue().getIdEquipo()));
-        pgEquipo.setCellValueFactory(c -> txt(c.getValue().getEquipoNombre()));
-        pgIdPrograma.setCellValueFactory(c -> txt(c.getValue().getIdPrograma()));
-        pgNombre.setCellValueFactory(c -> txt(c.getValue().getNombrePrograma()));
-        pgVersion.setCellValueFactory(c -> txt(c.getValue().getVersionActual()));
-        pgFecha.setCellValueFactory(c -> txt(f(c.getValue().getFechaInstalacion())));
-    }
-
     private void configurarTablaHistorial() {
         hsId.setCellValueFactory(c -> txt(c.getValue().getId()));
         hsFecha.setCellValueFactory(c -> txt(f(c.getValue().getFecha())));
@@ -527,11 +503,6 @@ public class PantallaTecnicoController {
         SortedList<RegistroActualizacion> sAc = new SortedList<>(fActualizaciones);
         sAc.comparatorProperty().bind(tablaActualizaciones.comparatorProperty());
         tablaActualizaciones.setItems(sAc);
-
-        fProgramas = new FilteredList<>(programas, p -> true);
-        SortedList<EquipoPrograma> sPg = new SortedList<>(fProgramas);
-        sPg.comparatorProperty().bind(tablaProgramas.comparatorProperty());
-        tablaProgramas.setItems(sPg);
 
         fHistorial = new FilteredList<>(historial, h -> true);
         SortedList<HistorialRegistro> sHs = new SortedList<>(fHistorial);
@@ -658,13 +629,6 @@ public class PantallaTecnicoController {
     }
 
     @FXML
-    private void filtrarProgramas(Event e) {
-        String q = texto(txtBuscarProg);
-        fProgramas.setPredicate(p -> q.isEmpty() || p.textoBusqueda().contains(q));
-        lblConteoProg.setText(fProgramas.size() + " de " + programas.size() + " programas");
-    }
-
-    @FXML
     private void filtrarHistorial(Event e) {
         String q = texto(txtBuscarHist);
         fHistorial.setPredicate(h -> q.isEmpty()
@@ -689,7 +653,6 @@ public class PantallaTecnicoController {
     private void mostrarFicha(Equipo eq) {
         long mant = mantenimientos.stream().filter(m -> m.getIdEquipo().equals(eq.getId())).count();
         long act = actualizaciones.stream().filter(a -> a.getIdEquipo() == eq.getId()).count();
-        long prog = programas.stream().filter(p -> p.getIdEquipo() == eq.getId()).count();
 
         String ficha = "id                     : " + eq.getId() + "\n"
                 + "equipos                : " + eq.getEquipos() + "\n"
@@ -706,8 +669,7 @@ public class PantallaTecnicoController {
                 + "fecha_actualizacion    : " + f(eq.getFechaActualizacion()) + "\n"
                 + "-------------------------------------------\n"
                 + "mantenimientos         : " + mant + "\n"
-                + "actualizaciones        : " + act + "\n"
-                + "programas instalados   : " + prog;
+                + "actualizaciones        : " + act + "\n";
 
         Alert a = new Alert(Alert.AlertType.INFORMATION);
         a.setTitle("Ficha tecnica");
@@ -931,16 +893,6 @@ public class PantallaTecnicoController {
         abrirDialogoActualizacion(r, null);
     }
 
-    @FXML
-    private void actualizarPrograma() {
-        EquipoPrograma p = tablaProgramas.getSelectionModel().getSelectedItem();
-        if (p == null) {
-            aviso("Selecciona el programa instalado que actualizaste.");
-            return;
-        }
-        abrirDialogoActualizacion(null, p);
-    }
-
     private void abrirDialogoActualizacion(RegistroActualizacion existente, EquipoPrograma programaPre) {
         try {
             FXMLLoader loader = cargarVista("DialogoActualizacion.fxml");
@@ -984,14 +936,6 @@ public class PantallaTecnicoController {
                 actualizacionRepository.actualizar(r);
                 tablaActualizaciones.refresh();
                 historialRepository.registrarPorActualizacion(r.getIdEquipo(), r.getId());
-            }
-
-            if ("Programa".equalsIgnoreCase(r.getTipo())) {
-                programas.stream()
-                        .filter(p -> p.getIdEquipo() == r.getIdEquipo()
-                                && p.getNombrePrograma().equalsIgnoreCase(r.getNombreActualizado()))
-                        .forEach(p -> p.setVersionActual(r.getVersionActualizada()));
-                tablaProgramas.refresh();
             }
 
             Equipo eq = buscarEquipo(r.getIdEquipo());
@@ -1392,11 +1336,6 @@ public class PantallaTecnicoController {
     }
 
     @FXML
-    private void irAProgramas(ActionEvent e) {
-        irATab(e, 3);
-    }
-
-    @FXML
     private void irAHistorial(ActionEvent e) {
         irATab(e, 4);
     }
@@ -1416,8 +1355,8 @@ public class PantallaTecnicoController {
     private void cerrarSesion(ActionEvent e) {
         hiloChat.shutdownNow();
         SesionManager.getInstance().limpiar();
-        // TODO: enlaza aqui tu navegacion a la pantalla de login
         aviso("Sesion cerrada (conecta aqui tu pantalla de login).");
+        Navigator.navigate("/com/utng/ui/Auth/pantallaLogin/PantallaLogin.fxml");
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -1451,7 +1390,6 @@ public class PantallaTecnicoController {
         lblConteoEquipos.setText(fEquipos.size() + " de " + equipos.size() + " equipos");
         lblConteoMant.setText(fMantenimientos.size() + " de " + mantenimientos.size() + " registros");
         lblConteoAct.setText(fActualizaciones.size() + " de " + actualizaciones.size() + " registros");
-        lblConteoProg.setText(fProgramas.size() + " de " + programas.size() + " programas");
         lblConteoHist.setText(fHistorial.size() + " de " + historial.size() + " movimientos");
         lblTotalConsultores.setText(String.valueOf(fConsultores.size()));
     }

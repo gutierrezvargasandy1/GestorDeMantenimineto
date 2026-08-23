@@ -9,6 +9,7 @@ import com.utng.config.OllamaConfig;
 import com.utng.util.AppException;
 import com.utng.util.MarkdownRenderer;
 import com.utng.util.Navigator;
+import com.utng.util.SesionManager;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -137,13 +138,17 @@ public class PantallaDashboardController {
     @FXML
     private TextField txtPregunta;
 
+    @FXML
+    private Label lblAvatarUsuario, lblNombreUsuario, lblRolUsuario;
+
     // ============================================================
     // DATOS EN MEMORIA
     // ============================================================
     private final ObservableList<MantenimientoModel> datos = FXCollections.observableArrayList();
     private FilteredList<MantenimientoModel> datosFiltrados;
     private String estadoFiltro = "TODOS";
-
+    private Long idTecnicoSesion;
+    private String nombreTecnicoSesion;
     private static final String BIENVENIDA = "Hola Gerardo! Soy tu asistente del CGTI. Puedo consultar el historial de un "
             +
             "equipo, contar mantenimientos preventivos y correctivos del mes o resumir los " +
@@ -154,6 +159,13 @@ public class PantallaDashboardController {
     // ============================================================
     @FXML
     public void initialize() {
+
+        idTecnicoSesion = SesionManager.getInstance().getIdUsuario();
+        nombreTecnicoSesion = SesionManager.getInstance().getNombreCompleto();
+
+        lblNombreUsuario.setText(nombreTecnicoSesion);
+        lblRolUsuario.setText("Administrador CGTI");
+        lblAvatarUsuario.setText(iniciales(nombreTecnicoSesion));
         configurarFecha();
         configurarTablaMantenimientos();
         configurarFiltros();
@@ -170,6 +182,13 @@ public class PantallaDashboardController {
         DateTimeFormatter f = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale.of("es", "MX"));
         String texto = LocalDate.now().format(f);
         lblFechaHoy.setText(Character.toUpperCase(texto.charAt(0)) + texto.substring(1));
+    }
+
+    private String iniciales(String nombre) {
+        String[] p = nombre.trim().split("\\s+");
+        if (p.length == 1)
+            return p[0].substring(0, Math.min(2, p[0].length())).toUpperCase();
+        return ("" + p[0].charAt(0) + p[1].charAt(0)).toUpperCase();
     }
 
     // ============================================================

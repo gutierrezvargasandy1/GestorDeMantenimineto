@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.utng.EquipoModule.model.sistemaOperativo.SistemaOperativo;
+import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
 import com.utng.util.Navigator;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -65,6 +66,7 @@ public class Pantallasistemasoperativoscontroller {
     private static final String CAMPO_TODOS = "Todos los campos";
     private static final String TIPO_TODOS = "Todos los tipos";
     private static final String NOMBRE_TODOS = "Todos los nombres";
+    private final SistemaOperativoRepository sistemaOperativoRepository = new SistemaOperativoRepository();
 
     /** Opción del filtro para las filas con {@code tipo} NULL o vacío. */
     private static final String SIN_TIPO = "Sin tipo";
@@ -174,7 +176,7 @@ public class Pantallasistemasoperativoscontroller {
     public void initialize() {
         configurarTabla();
         configurarFiltros();
-        cargarDatosEstaticos(); // TODO BD: sistemaOperativoRepository.obtenerTodos()
+        cargarDatosDesdeBD(); // antes: cargarDatosEstaticos()
         refrescarCombosDeFiltro();
         refrescarChips();
         aplicarFiltros();
@@ -476,9 +478,7 @@ public class Pantallasistemasoperativoscontroller {
         Optional<SistemaOperativo> resultado = abrirFormulario(null);
 
         resultado.ifPresent(nuevo -> {
-            // TODO BD: sistemaOperativoRepository.guardar(nuevo);
-            // INSERT INTO sistemas_operativos (tipo, nombre, version_actual) VALUES (?,?,?)
-            nuevo.setIdSistemaOperativo(siguienteId());
+            sistemaOperativoRepository.guardar(nuevo); // asigna el id real de la BD
             datos.add(nuevo);
 
             refrescar();
@@ -506,8 +506,7 @@ public class Pantallasistemasoperativoscontroller {
         Optional<SistemaOperativo> resultado = abrirFormulario(so);
 
         resultado.ifPresent(actualizado -> {
-            // TODO BD: sistemaOperativoRepository.actualizar(actualizado);
-            // UPDATE sistemas_operativos SET tipo=?, nombre=?, version_actual=? WHERE id=?
+            sistemaOperativoRepository.actualizar(actualizado);
             refrescar();
             tablaSistemas.getSelectionModel().select(actualizado);
             info("Cambios guardados",
@@ -539,8 +538,7 @@ public class Pantallasistemasoperativoscontroller {
                         + "tuvieran asignado quedarán SIN sistema operativo, pero no se borrarán.");
 
         if (confirmado) {
-            // TODO BD: sistemaOperativoRepository.eliminar(so.getIdSistemaOperativo());
-            // DELETE FROM sistemas_operativos WHERE id = ?
+            sistemaOperativoRepository.eliminar(so.getIdSistemaOperativo());
             datos.remove(so);
             refrescar();
             info("Sistema operativo eliminado",
@@ -802,40 +800,8 @@ public class Pantallasistemasoperativoscontroller {
         return lista;
     }
 
-    // ============================================================
-    // DATOS ESTÁTICOS (sustituir por la BD más adelante)
-    // ============================================================
-    private void cargarDatosEstaticos() {
-        // TODO BD: SELECT id, tipo, nombre, version_actual FROM sistemas_operativos
-        List<SistemaOperativo> demo = List.of(
-                new SistemaOperativo(1L, "escritorio", "Windows 11 Pro", "23H2"),
-                new SistemaOperativo(2L, "escritorio", "Windows 10 Pro", "22H2"),
-                new SistemaOperativo(3L, "servidor", "Windows Server", "2019"),
-                new SistemaOperativo(4L, "escritorio", "Ubuntu", "22.04 LTS"),
-                new SistemaOperativo(5L, "escritorio", "Debian", "12"),
-                new SistemaOperativo(6L, "escritorio", "Fedora", "40"),
-                new SistemaOperativo(7L, "escritorio", "macOS Sonoma", "14.5"),
-                new SistemaOperativo(8L, "servidor", "Ubuntu Server", "24.04 LTS"),
-                new SistemaOperativo(9L, "servidor", "Red Hat Enterprise Linux", "9.4"),
-                new SistemaOperativo(10L, "servidor", "Windows Server", "2022"),
-                new SistemaOperativo(11L, "movil", "Android", "14"),
-                new SistemaOperativo(12L, "movil", "iOS", "17.5"),
-                new SistemaOperativo(13L, "virtualizacion", "VMware ESXi", "8.0"),
-                new SistemaOperativo(14L, "virtualizacion", "Proxmox VE", "8.2"),
-                new SistemaOperativo(15L, "escritorio", "Windows 11 Pro", "24H2"),
-                new SistemaOperativo(16L, null, "Chrome OS Flex", "126"),
-                new SistemaOperativo(17L, null, "Windows 7 Professional", "SP1"));
-
-        datos.setAll(demo);
-    }
-
-    private Long siguienteId() {
-        long max = datos.stream()
-                .filter(so -> so.getIdSistemaOperativo() != null)
-                .mapToLong(SistemaOperativo::getIdSistemaOperativo)
-                .max()
-                .orElse(0L);
-        return max + 1;
+    private void cargarDatosDesdeBD() {
+        datos.setAll(sistemaOperativoRepository.obtenerTodos());
     }
 
     // ============================================================

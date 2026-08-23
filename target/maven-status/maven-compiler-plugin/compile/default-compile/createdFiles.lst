@@ -59,6 +59,7 @@ com\utng\TecnicoModule\model\RegistroActualizacion.class
 com\utng\util\SesionManager.class
 com\utng\ActualizacionModule\controller\PantallaActualizacionesController$1.class
 com\utng\MantenimientoModule\controller\PantallaMantenimientosController.class
+com\utng\ActualizacionModule\repository\ActualizacionRepository.class
 com\utng\AiModule\OllamaModels$GenerateRequest.class
 com\utng\TecnicoModule\repository\ActualizacionTecnicoRepository.class
 com\utng\util\MarkdownRenderer.class

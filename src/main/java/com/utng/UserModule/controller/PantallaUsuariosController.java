@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.TipoUsuario;
 import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.Navigator;
@@ -61,7 +62,7 @@ public class PantallaUsuariosController {
     private static final String ESTADO_TODOS = "Todos";
     private static final String ESTADO_ACTIVOS = "Activos";
     private static final String ESTADO_INACTIVOS = "Inactivos";
-
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -70,7 +71,6 @@ public class PantallaUsuariosController {
     /**
      * Marca para los registros de demostración: nunca se valida contra este valor.
      */
-    private static final String HASH_DEMO = "$2a$12$demoDemoDemoDemoDemoDe";
 
     // ============================================================
     // KPIs
@@ -193,10 +193,15 @@ public class PantallaUsuariosController {
     public void initialize() {
         configurarTabla();
         configurarFiltros();
-        cargarDatosEstaticos(); // TODO BD: reemplazar por usuarioRepository.obtenerTodos()
         aplicarFiltros();
+        cargarUsuariosDesdeBD(); // antes: cargarDatosEstaticos()
+
         cargarEstadisticas();
         actualizarEstadoBotones();
+    }
+
+    private void cargarUsuariosDesdeBD() {
+        datos.setAll(usuarioRepository.obtenerTodos());
     }
 
     // ============================================================
@@ -466,9 +471,7 @@ public class PantallaUsuariosController {
         Optional<Usuario> resultado = abrirFormulario(null);
 
         resultado.ifPresent(nuevo -> {
-            // TODO BD: usuarioRepository.guardar(nuevo);
-            nuevo.setIdUsuario(siguienteId());
-            nuevo.setFechaCreacion(new Timestamp(System.currentTimeMillis()));
+            usuarioRepository.guardar(nuevo); // asigna id y fecha_creacion reales
             datos.add(nuevo);
 
             refrescar();
@@ -495,7 +498,7 @@ public class PantallaUsuariosController {
         Optional<Usuario> resultado = abrirFormulario(usuario);
 
         resultado.ifPresent(actualizado -> {
-            // TODO BD: usuarioRepository.actualizar(actualizado);
+            usuarioRepository.actualizar(actualizado);
             refrescar();
             tablaUsuarios.getSelectionModel().select(actualizado);
             info("Cambios guardados", "Se actualizó la cuenta " + actualizado.getCorreo() + ".");
@@ -525,7 +528,7 @@ public class PantallaUsuariosController {
                         + "mantenimientos se conserva. Podrás reactivarlo cuando lo necesites.");
 
         if (confirmado) {
-            // TODO BD: usuarioRepository.eliminar(usuario.getIdUsuario());
+            usuarioRepository.eliminar(usuario.getIdUsuario());
             usuario.setActivo(false);
             refrescar();
         }
@@ -551,7 +554,7 @@ public class PantallaUsuariosController {
                         + etiquetaRol(usuario.getTipoUsuario()) + ".");
 
         if (confirmado) {
-            // TODO BD: usuario.setActivo(true); usuarioRepository.actualizar(usuario);
+            usuarioRepository.reactivar(usuario.getIdUsuario());
             usuario.setActivo(true);
             refrescar();
         }
@@ -847,68 +850,6 @@ public class PantallaUsuariosController {
         aplicarFiltros();
         cargarEstadisticas();
         actualizarEstadoBotones();
-    }
-
-    // ============================================================
-    // DATOS ESTÁTICOS (sustituir por la BD más adelante)
-    // ============================================================
-    private void cargarDatosEstaticos() {
-        List<Usuario> demo = List.of(
-                crear(1L, "Gerardo", "Espíndola", "Ramírez", "gerardo.espindola@utng.edu.mx",
-                        TipoUsuario.ADMINISTRADOR, true, LocalDateTime.of(2025, 1, 15, 9, 30)),
-                crear(2L, "Luis Ángel", "Ortega", "Mendoza", "luis.ortega@utng.edu.mx",
-                        TipoUsuario.TECNICO, true, LocalDateTime.of(2025, 2, 3, 11, 5)),
-                crear(3L, "Karla", "Núñez", "Salinas", "karla.nunez@utng.edu.mx",
-                        TipoUsuario.TECNICO, true, LocalDateTime.of(2025, 2, 18, 8, 45)),
-                crear(4L, "Diego", "Salas", "Ibarra", "diego.salas@utng.edu.mx",
-                        TipoUsuario.TECNICO, true, LocalDateTime.of(2025, 3, 2, 16, 20)),
-                crear(5L, "Ana Sofía", "Ramírez", "Cortés", "ana.ramirez@utng.edu.mx",
-                        TipoUsuario.CONSULTA, true, LocalDateTime.of(2025, 3, 22, 10, 0)),
-                crear(6L, "Jorge", "Medina", "Aguilar", "jorge.medina@utng.edu.mx",
-                        TipoUsuario.CONSULTA, true, LocalDateTime.of(2025, 4, 9, 13, 15)),
-                crear(7L, "Mariana", "Beltrán", "Ochoa", "mariana.beltran@utng.edu.mx",
-                        TipoUsuario.ADMINISTRADOR, true, LocalDateTime.of(2025, 5, 6, 9, 0)),
-                crear(8L, "Ricardo", "Vega", null, "ricardo.vega@utng.edu.mx",
-                        TipoUsuario.TECNICO, false, LocalDateTime.of(2025, 5, 27, 15, 40)),
-                crear(9L, "Paola", "Hernández", "Luna", "paola.hernandez@utng.edu.mx",
-                        TipoUsuario.CONSULTA, true, LocalDateTime.of(2025, 6, 11, 12, 10)),
-                crear(10L, "Emilio", "Cárdenas", "Rojas", "emilio.cardenas@utng.edu.mx",
-                        TipoUsuario.CONSULTA, false, LocalDateTime.of(2025, 7, 1, 17, 55)),
-                crear(11L, "Fernanda", "Zamora", "Ríos", "fernanda.zamora@utng.edu.mx",
-                        TipoUsuario.TECNICO, true, LocalDateTime.of(2025, 8, 19, 8, 5)),
-                crear(12L, "Hugo", "Peralta", "Ávila", "hugo.peralta@utng.edu.mx",
-                        TipoUsuario.CONSULTA, true, LocalDateTime.of(2026, 1, 14, 14, 30)));
-
-        datos.setAll(demo);
-    }
-
-    private Usuario crear(Long id, String nombre, String paterno, String materno, String correo,
-            TipoUsuario tipo, boolean activo, LocalDateTime alta) {
-
-        Usuario u = new Usuario();
-        u.setIdUsuario(id);
-        u.setNombreCompleto(nombre);
-        u.setApellidoPaterno(paterno);
-        u.setApellidoMaterno(materno);
-        u.setCorreo(correo);
-        u.setPassword(HASH_DEMO);
-        u.setTipoUsuario(tipo);
-        u.setIntentosRecuperacion(0);
-        u.setRecuperacionActiva(false);
-        u.setFechaCodigo(null);
-        u.setCodigoRecuperacion(null);
-        u.setFechaCreacion(Timestamp.valueOf(alta));
-        u.setActivo(activo);
-        return u;
-    }
-
-    private Long siguienteId() {
-        long max = datos.stream()
-                .filter(u -> u.getIdUsuario() != null)
-                .mapToLong(Usuario::getIdUsuario)
-                .max()
-                .orElse(0L);
-        return max + 1;
     }
 
     // ============================================================

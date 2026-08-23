@@ -43,6 +43,7 @@ import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.chatModule.model.Chat;
 import com.utng.chatModule.model.Mensaje;
 import com.utng.chatModule.service.ChatService;
+import com.utng.util.Navigator;
 import com.utng.util.SesionManager;
 
 /**
@@ -831,8 +832,9 @@ public class PantallaConsultorController {
     private void cerrarSesion(javafx.event.ActionEvent e) {
         hiloChat.shutdownNow();
         SesionManager.getInstance().limpiar();
-        // TODO: enlaza aqui tu navegacion a la pantalla de login
         aviso("Sesion cerrada (conecta aqui tu pantalla de login).");
+        Navigator.navigate("/com/utng/ui/Auth/pantallaLogin/PantallaLogin.fxml");
+
     }
 
     // ══════════════════════════════════════════════════════════════
