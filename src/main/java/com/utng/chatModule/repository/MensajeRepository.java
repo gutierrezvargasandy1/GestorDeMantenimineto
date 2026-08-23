@@ -2,6 +2,7 @@ package com.utng.chatModule.repository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.bson.Document;
@@ -209,5 +210,40 @@ public class MensajeRepository {
         }
 
         return mensaje;
+    }
+
+    // ==========================================
+    // OBTENER MENSAJES DE UN CHAT, ORDENADOS
+    // ==========================================
+    public List<Mensaje> buscarPorChatIdOrdenado(ObjectId chatId) {
+        List<Mensaje> mensajes = buscarPorChatId(chatId);
+        mensajes.sort(Comparator.comparing(Mensaje::getFechaEnvio));
+        return mensajes;
+    }
+
+    // ==========================================
+    // CONTAR MENSAJES NO LEIDOS DE UN CHAT PARA UN RECEPTOR
+    // ==========================================
+    public long contarNoLeidos(ObjectId chatId, ObjectId receptorId) {
+        return collection.countDocuments(
+                and(eq("chatId", chatId), eq("receptorId", receptorId), eq("leido", false)));
+    }
+
+    // ==========================================
+    // MARCAR TODA LA CONVERSACION COMO LEIDA
+    // ==========================================
+    public long marcarConversacionLeida(ObjectId chatId, ObjectId receptorId) {
+        Document actualizacion = new Document("$set", new Document("leido", true));
+
+        return collection.updateMany(
+                and(eq("chatId", chatId), eq("receptorId", receptorId), eq("leido", false)),
+                actualizacion).getModifiedCount();
+    }
+
+    // ==========================================
+    // BORRAR TODOS LOS MENSAJES DE UN CHAT
+    // ==========================================
+    public long eliminarPorChatId(ObjectId chatId) {
+        return collection.deleteMany(eq("chatId", chatId)).getDeletedCount();
     }
 }

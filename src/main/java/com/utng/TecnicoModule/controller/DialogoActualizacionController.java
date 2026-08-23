@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 /** Formulario de alta / edicion de registros_actualizaciones. */
 public class DialogoActualizacionController {
@@ -37,7 +38,7 @@ public class DialogoActualizacionController {
     private Label lblError;
 
     private RegistroActualizacion registro; // null = alta nueva
-    private int idTecnico;
+    private Long idTecnico;
     private String nombreTecnico;
 
     @FXML
@@ -47,7 +48,7 @@ public class DialogoActualizacionController {
         dpFecha.setValue(LocalDate.now());
     }
 
-    public void configurar(ObservableList<Equipo> equipos, int idTecnico, String nombreTecnico) {
+    public void configurar(ObservableList<Equipo> equipos, Long idTecnico, String nombreTecnico) {
         cmbEquipo.getItems().setAll(equipos);
         this.idTecnico = idTecnico;
         this.nombreTecnico = nombreTecnico;
@@ -69,7 +70,7 @@ public class DialogoActualizacionController {
         lblIdRegistro.setText("id " + r.getId());
 
         equipos.stream()
-                .filter(e -> e.getId() == r.getIdEquipo())
+                .filter(e -> Objects.equals(e.getId(), r.getIdEquipo()))
                 .findFirst()
                 .ifPresent(e -> cmbEquipo.getSelectionModel().select(e));
 
@@ -118,13 +119,15 @@ public class DialogoActualizacionController {
         lblError.setManaged(false);
     }
 
+    /**
+     * Devuelve el registro con los datos del formulario. En alta, el id
+     * queda en null: lo asigna el repositorio real con RETURNING id.
+     */
     public RegistroActualizacion obtenerRegistro() {
         Equipo eq = cmbEquipo.getValue();
 
         if (registro == null) {
             registro = new RegistroActualizacion();
-            registro.setId(0);
-            registro.setFechaRegistro(LocalDate.now());
         }
 
         registro.setIdEquipo(eq.getId());

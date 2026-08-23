@@ -13,9 +13,13 @@ import javafx.util.StringConverter;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 /** Formulario de alta / edicion de registros_mantenimiento. */
 public class DialogoMantenimientoController {
+
+    private static final String ESTADO_PENDIENTE = "Pendiente";
+    private static final String ESTADO_COMPLETADO = "Completado";
 
     @FXML
     private Label lblTitulo;
@@ -28,26 +32,26 @@ public class DialogoMantenimientoController {
     @FXML
     private TextArea txtMotivo;
     @FXML
-    private TextArea txtRealizado;
+    private TextArea txtRealizado; // ahora: notas_realizado
     @FXML
     private DatePicker dpFecha;
     @FXML
     private DatePicker dpFechaProxima;
     @FXML
-    private ComboBox<String> cmbEstado;
+    private ComboBox<String> cmbEstado; // ahora: Pendiente / Completado (mantenimiento_realizado)
     @FXML
     private Label lblResponsable;
     @FXML
     private Label lblError;
 
     private RegistroMantenimiento registro; // null = alta nueva
-    private int idTecnico;
+    private Long idTecnico;
     private String nombreTecnico;
 
     @FXML
     private void initialize() {
         cmbTipo.getItems().setAll(RegistroMantenimiento.TIPOS);
-        cmbEstado.getItems().setAll(RegistroMantenimiento.ESTADOS);
+        cmbEstado.getItems().setAll(ESTADO_PENDIENTE, ESTADO_COMPLETADO);
         cmbEstado.getSelectionModel().selectFirst();
         formatoISO(dpFecha);
         formatoISO(dpFechaProxima);
@@ -80,7 +84,7 @@ public class DialogoMantenimientoController {
     }
 
     /** Carga los equipos disponibles y los datos del tecnico logueado. */
-    public void configurar(ObservableList<Equipo> equipos, int idTecnico, String nombreTecnico) {
+    public void configurar(ObservableList<Equipo> equipos, Long idTecnico, String nombreTecnico) {
         cmbEquipo.getItems().setAll(equipos);
         this.idTecnico = idTecnico;
         this.nombreTecnico = nombreTecnico;
@@ -104,16 +108,16 @@ public class DialogoMantenimientoController {
         lblIdRegistro.setText("id " + r.getId());
 
         equipos.stream()
-                .filter(e -> e.getId() == r.getIdEquipo())
+                .filter(e -> Objects.equals(e.getId(), r.getIdEquipo()))
                 .findFirst()
                 .ifPresent(e -> cmbEquipo.getSelectionModel().select(e));
 
         cmbTipo.getSelectionModel().select(r.getTipo());
         txtMotivo.setText(r.getMotivo());
-        txtRealizado.setText(r.getMantenimientoRealizado());
+        txtRealizado.setText(r.getNotasRealizado());
         dpFecha.setValue(r.getFecha());
         dpFechaProxima.setValue(r.getFechaProxima());
-        cmbEstado.getSelectionModel().select(r.getEstado());
+        cmbEstado.getSelectionModel().select(r.isMantenimientoRealizado() ? ESTADO_COMPLETADO : ESTADO_PENDIENTE);
     }
 
     public boolean esEdicion() {
@@ -136,9 +140,9 @@ public class DialogoMantenimientoController {
         if (dpFechaProxima.getValue() != null
                 && dpFechaProxima.getValue().isBefore(dpFecha.getValue()))
             return fallar("La fecha_proxima no puede ser anterior a la fecha del mantenimiento.");
-        if ("Completado".equalsIgnoreCase(cmbEstado.getValue())
+        if (ESTADO_COMPLETADO.equalsIgnoreCase(cmbEstado.getValue())
                 && (txtRealizado.getText() == null || txtRealizado.getText().trim().isEmpty()))
-            return fallar("Para marcarlo como Completado describe el mantenimiento_realizado.");
+            return fallar("Para marcarlo como Completado describe que se hizo.");
 
         ocultarError();
         return true;
@@ -157,27 +161,25 @@ public class DialogoMantenimientoController {
     }
 
     /**
-     * Devuelve el registro con los datos del formulario.
-     * En alta el id llega en 0: asignalo con el que regrese tu INSERT.
+     * Devuelve el registro con los datos del formulario. En alta, el id
+     * queda en null: lo asigna el repositorio real con RETURNING id.
      */
     public RegistroMantenimiento obtenerRegistro() {
         Equipo eq = cmbEquipo.getValue();
 
         if (registro == null) {
             registro = new RegistroMantenimiento();
-            registro.setId(0);
-            registro.setFechaRegistro(LocalDate.now());
         }
 
         registro.setIdEquipo(eq.getId());
         registro.setEquipoNombre(eq.getEquipos());
         registro.setTipo(cmbTipo.getValue());
         registro.setMotivo(txtMotivo.getText().trim());
-        registro.setMantenimientoRealizado(
-                txtRealizado.getText() == null ? "" : txtRealizado.getText().trim());
+        registro.setNotasRealizado(
+                txtRealizado.getText() == null ? null : txtRealizado.getText().trim());
         registro.setFecha(dpFecha.getValue());
         registro.setFechaProxima(dpFechaProxima.getValue());
-        registro.setEstado(cmbEstado.getValue());
+        registro.setMantenimientoRealizado(ESTADO_COMPLETADO.equalsIgnoreCase(cmbEstado.getValue()));
         registro.setIdUsuarioResponsable(idTecnico);
         registro.setUsuarioResponsable("#" + idTecnico + " " + nombreTecnico);
 

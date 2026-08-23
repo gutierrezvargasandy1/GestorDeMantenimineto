@@ -1,6 +1,5 @@
 package com.utng.ConsultorModule.Dashboard;
 
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -18,31 +17,50 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.util.Duration;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Predicate;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.bson.types.ObjectId;
 
 import com.utng.ConsultorModule.model.EquipoConsulta;
 import com.utng.ConsultorModule.model.TecnicoChat;
+import com.utng.UserModule.UsuarioRepository;
+import com.utng.UserModule.model.usuario.TipoUsuario;
+import com.utng.UserModule.model.usuario.Usuario;
+import com.utng.chatModule.model.Chat;
+import com.utng.chatModule.model.Mensaje;
+import com.utng.chatModule.service.ChatService;
+import com.utng.util.SesionManager;
 
 /**
- * 
  * Controlador de la pantalla del rol CONSULTOR.
  *
  * Permisos de este rol:
  * - VER el inventario de equipos (13 campos), buscar, filtrar y exportar.
  * - NO puede crear, editar ni eliminar equipos.
- * - Puede chatear con usuarios de tipo TECNICO para reportar fallas.
+ * - Puede chatear con usuarios de tipo TECNICO para reportar fallas (via
+ * MongoDB), con contactos reales sacados de la tabla usuarios (rol =
+ * tecnico).
  */
 public class PantallaConsultorController {
+
+    // ═══════════ SESION (real, viene del login) ═══════════
+    private Long idConsultorSesion;
+    private String nombreConsultorSesion;
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     // ───────────── ENCABEZADO ─────────────
     @FXML
@@ -172,10 +190,6 @@ public class PantallaConsultorController {
     private FilteredList<EquipoConsulta> equiposFiltrados;
     private FilteredList<TecnicoChat> tecnicosFiltrados;
 
-    /**
-     * Estado activo del chip: "TODOS", "Activo", "En mantenimiento", "Inactivo",
-     * "De baja".
-     */
     private String estadoSeleccionado = "TODOS";
 
     /** Equipo que el consultor adjunto al chat como contexto del reporte. */
@@ -185,17 +199,32 @@ public class PantallaConsultorController {
 
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
+    // ═══════════ CHAT (MongoDB) ═══════════
+    private final ChatService chatService = new ChatService();
+    private ObjectId miId;
+    private ObjectId chatActualId;
+    private int mensajesMostrados = 0;
+
+    private final ScheduledExecutorService hiloChat = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "chat-refresco-consultor");
+        t.setDaemon(true);
+        return t;
+    });
+
     // ══════════════════════════════════════════════════════════════
     // INICIALIZACION
     // ══════════════════════════════════════════════════════════════
     @FXML
     private void initialize() {
+        // ── Sesion real (viene del login) ──
+        idConsultorSesion = SesionManager.getInstance().getIdUsuario();
+        nombreConsultorSesion = SesionManager.getInstance().getNombreCompleto();
+
         configurarFecha();
         configurarTabla();
         configurarListaTecnicos();
 
-        cargarEquiposDemo(); // <-- reemplaza por tu consulta a la base de datos
-        cargarTecnicosDemo(); // <-- reemplaza por tu consulta a usuarios tipo TECNICO
+        cargarEquiposDemo(); // <-- equipos siguen demo hasta tener su repo aqui
 
         configurarFiltros();
         actualizarKPIs();
@@ -204,6 +233,15 @@ public class PantallaConsultorController {
 
         btnEnviar.setDisable(true);
         txtMensaje.setDisable(true);
+
+        lblNombreUsuario.setText(nombreConsultorSesion);
+        lblRolUsuario.setText("Consultor CGTI");
+        lblAvatarUsuario.setText(iniciales(nombreConsultorSesion));
+
+        // ── Chat real contra Mongo, con id real de sesion ──
+        miId = ChatService.idDesdeLong(idConsultorSesion);
+        cargarTecnicosReales();
+        hiloChat.scheduleWithFixedDelay(this::refrescarChatsEnSegundoPlano, 3, 3, TimeUnit.SECONDS);
     }
 
     private void configurarFecha() {
@@ -233,7 +271,6 @@ public class PantallaConsultorController {
         colFechaCreacion.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFechaCreacion()));
         colFechaActualizacion.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFechaActualizacion()));
 
-        // Badge de color en la columna estado
         colEstado.setCellFactory(col -> new TableCell<EquipoConsulta, String>() {
             @Override
             protected void updateItem(String estado, boolean vacio) {
@@ -250,7 +287,6 @@ public class PantallaConsultorController {
             }
         });
 
-        // Doble clic = ver detalle (sigue siendo solo lectura)
         tablaEquipos.setRowFactory(tv -> {
             TableRow<EquipoConsulta> fila = new TableRow<>();
             fila.setOnMouseClicked(ev -> {
@@ -261,7 +297,6 @@ public class PantallaConsultorController {
             return fila;
         });
 
-        // Refuerzo del modo consulta
         tablaEquipos.setEditable(false);
         tablaEquipos.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
@@ -494,8 +529,21 @@ public class PantallaConsultorController {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // CHAT CON TECNICOS
+    // CHAT CON TECNICOS (MongoDB real, contactos reales de SQL)
     // ══════════════════════════════════════════════════════════════
+    /** Carga tecnicos reales (rol = tecnico, activos) desde la tabla usuarios. */
+    private void cargarTecnicosReales() {
+        List<Usuario> tecnicosBD = usuarioRepository.obtenerActivosPorRol(TipoUsuario.TECNICO);
+
+        tecnicos.clear();
+        for (Usuario u : tecnicosBD) {
+            String nombreCompleto = (u.getNombreCompleto() + " " + u.getApellidoPaterno()).trim();
+            TecnicoChat tc = new TecnicoChat(u.getIdUsuario(), nombreCompleto, "Soporte tecnico", true);
+            tecnicos.add(tc);
+        }
+        lblTotalTecnicos.setText(String.valueOf(tecnicos.size()));
+    }
+
     private void configurarListaTecnicos() {
         tecnicosFiltrados = new FilteredList<>(tecnicos, t -> true);
         listaTecnicos.setItems(tecnicosFiltrados);
@@ -561,6 +609,7 @@ public class PantallaConsultorController {
     private void abrirConversacion(TecnicoChat t) {
         tecnicoActual = t;
         contenedorChat.getChildren().clear();
+        mensajesMostrados = 0;
 
         if (t == null) {
             lblAvatarTecnico.setText("--");
@@ -569,6 +618,7 @@ public class PantallaConsultorController {
             lblEstadoConexion.setText("Sin conversacion");
             txtMensaje.setDisable(true);
             btnEnviar.setDisable(true);
+            chatActualId = null;
             return;
         }
 
@@ -585,18 +635,33 @@ public class PantallaConsultorController {
         txtMensaje.setDisable(false);
         btnEnviar.setDisable(false);
 
-        if (t.getConversacion().isEmpty()) {
-            pintarSistema("Inicia la conversacion con " + t.getNombre()
+        ObjectId otroId = ChatService.idDesdeLong(t.getId());
+        Chat chat = chatService.obtenerOCrearChat(miId, otroId);
+        chatActualId = chat.getId();
+
+        cargarMensajes();
+        chatService.marcarConversacionLeida(chatActualId, miId);
+    }
+
+    private void cargarMensajes() {
+        List<Mensaje> mensajes = chatService.obtenerMensajes(chatActualId);
+
+        if (mensajes.isEmpty()) {
+            pintarSistema("Inicia la conversacion con " + tecnicoActual.getNombre()
                     + ". Puedes adjuntar un equipo con el boton \"Reportar al tecnico\".");
         } else {
-            t.getConversacion().forEach(m -> pintarBurbuja(m.getTexto(), m.getHora(), m.isMio()));
+            for (Mensaje m : mensajes) {
+                boolean mio = m.getEmisorId().equals(miId);
+                pintarBurbuja(m.getMensaje(), m.getFechaEnvio().format(HORA), mio);
+            }
         }
+        mensajesMostrados = mensajes.size();
         bajarScroll();
     }
 
     @FXML
     private void enviarMensaje() {
-        if (tecnicoActual == null) {
+        if (tecnicoActual == null || chatActualId == null) {
             aviso("Selecciona primero un tecnico de la lista.");
             return;
         }
@@ -610,31 +675,12 @@ public class PantallaConsultorController {
                     + " | " + equipoContexto.getLugar() + "] " + texto;
         }
 
-        String hora = LocalTime.now().format(HORA);
-        tecnicoActual.agregarMensaje(new TecnicoChat.Mensaje(texto, hora, true));
-        pintarBurbuja(texto, hora, true);
+        ObjectId otroId = ChatService.idDesdeLong(tecnicoActual.getId());
+        Mensaje m = chatService.enviarMensaje(chatActualId, miId, otroId, texto);
+        pintarBurbuja(m.getMensaje(), m.getFechaEnvio().format(HORA), true);
+        mensajesMostrados++;
         txtMensaje.clear();
         bajarScroll();
-
-        simularRespuesta(tecnicoActual);
-    }
-
-    /**
-     * Acuse de recibo simulado. Sustituye este metodo por tu servicio real
-     * de mensajeria (WebSocket, REST, tabla de mensajes en la BD, etc.).
-     */
-    private void simularRespuesta(TecnicoChat destino) {
-        PauseTransition espera = new PauseTransition(Duration.seconds(1.1));
-        espera.setOnFinished(ev -> {
-            String hora = LocalTime.now().format(HORA);
-            String respuesta = "Reporte recibido. Lo registro como incidencia y te confirmo la visita.";
-            destino.agregarMensaje(new TecnicoChat.Mensaje(respuesta, hora, false));
-            if (destino == tecnicoActual) {
-                pintarBurbuja(respuesta, hora, false);
-                bajarScroll();
-            }
-        });
-        espera.play();
     }
 
     @FXML
@@ -647,11 +693,20 @@ public class PantallaConsultorController {
 
     @FXML
     private void limpiarChat() {
+        if (chatActualId == null)
+            return;
+
+        Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "Se borraran todos los mensajes de esta conversacion. Continuar?",
+                ButtonType.YES, ButtonType.NO);
+        conf.setHeaderText(null);
+        if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES)
+            return;
+
+        chatService.eliminarConversacion(chatActualId);
         contenedorChat.getChildren().clear();
-        if (tecnicoActual != null) {
-            tecnicoActual.limpiarConversacion();
-            pintarSistema("Conversacion limpiada.");
-        }
+        mensajesMostrados = 0;
+        pintarSistema("Conversacion limpiada.");
         equipoContexto = null;
         lblEquipoContexto.setText("Sin equipo seleccionado");
     }
@@ -674,6 +729,38 @@ public class PantallaConsultorController {
                 + ") - " + eq.getLugar() + " - estado: " + eq.getEstado());
         txtMensaje.requestFocus();
         bajarScroll();
+    }
+
+    // ── Polling en segundo plano: mensajes nuevos ──
+    private void refrescarChatsEnSegundoPlano() {
+        try {
+            ObjectId chatAbiertoSnapshot = chatActualId;
+            List<Mensaje> mensajesChatAbierto = chatAbiertoSnapshot != null
+                    ? chatService.obtenerMensajes(chatAbiertoSnapshot)
+                    : null;
+
+            Platform.runLater(() -> aplicarRefrescoChat(chatAbiertoSnapshot, mensajesChatAbierto));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void aplicarRefrescoChat(ObjectId chatAbierto, List<Mensaje> mensajes) {
+        if (chatAbierto != null && chatAbierto.equals(chatActualId)
+                && mensajes != null && mensajes.size() != mensajesMostrados) {
+            contenedorChat.getChildren().clear();
+            if (mensajes.isEmpty()) {
+                pintarSistema("Inicia la conversacion con " + tecnicoActual.getNombre() + ".");
+            } else {
+                for (Mensaje m : mensajes) {
+                    boolean mio = m.getEmisorId().equals(miId);
+                    pintarBurbuja(m.getMensaje(), m.getFechaEnvio().format(HORA), mio);
+                }
+            }
+            mensajesMostrados = mensajes.size();
+            chatService.marcarConversacionLeida(chatAbierto, miId);
+            bajarScroll();
+        }
     }
 
     // ───────────── burbujas del chat ─────────────
@@ -742,6 +829,8 @@ public class PantallaConsultorController {
 
     @FXML
     private void cerrarSesion(javafx.event.ActionEvent e) {
+        hiloChat.shutdownNow();
+        SesionManager.getInstance().limpiar();
         // TODO: enlaza aqui tu navegacion a la pantalla de login
         aviso("Sesion cerrada (conecta aqui tu pantalla de login).");
     }
@@ -761,8 +850,17 @@ public class PantallaConsultorController {
         a.showAndWait();
     }
 
+    private String iniciales(String nombre) {
+        String[] p = nombre.trim().split("\\s+");
+        if (p.length == 1)
+            return p[0].substring(0, Math.min(2, p[0].length())).toUpperCase();
+        return ("" + p[0].charAt(0) + p[1].charAt(0)).toUpperCase();
+    }
+
     // ══════════════════════════════════════════════════════════════
-    // DATOS DE EJEMPLO -> reemplaza por tus consultas a la BD
+    // DATOS DE EJEMPLO -> equipos siguen demo mientras no tengas
+    // EquipoRepository. Los tecnicos YA NO se cargan aqui (ver
+    // cargarTecnicosReales()).
     // ══════════════════════════════════════════════════════════════
     private void cargarEquiposDemo() {
         equipos.addAll(
@@ -802,15 +900,5 @@ public class PantallaConsultorController {
                 new EquipoConsulta(12, "PC-LAB-031", "Dell OptiPlex 7010", "Intel Core i5-13500",
                         "16 GB", "512 GB SSD", "Windows 11 Pro", "Laboratorio C", "De baja",
                         2025, "U-204 Marisol R.", "2025-08-19", "2026-07-03"));
-    }
-
-    private void cargarTecnicosDemo() {
-        tecnicos.addAll(
-                new TecnicoChat(1, "Ana Torres", "Tecnico - Hardware", true),
-                new TecnicoChat(2, "Luis Mendoza", "Tecnico - Redes", true),
-                new TecnicoChat(3, "Marisol Ramos", "Tecnico - Software", false),
-                new TecnicoChat(4, "Carlos Vega", "Tecnico - Soporte", true),
-                new TecnicoChat(5, "Diana Estrada", "Tecnico - Mantenimiento", false));
-        lblTotalTecnicos.setText(String.valueOf(tecnicos.size()));
     }
 }

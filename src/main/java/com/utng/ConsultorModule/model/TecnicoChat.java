@@ -34,20 +34,20 @@ public class TecnicoChat {
         }
     }
 
-    private int id;
+    private Long id;
     private String nombre;
     private String area;
     private boolean enLinea;
     private final List<Mensaje> conversacion = new ArrayList<>();
 
-    public TecnicoChat(int id, String nombre, String area, boolean enLinea) {
+    public TecnicoChat(Long id, String nombre, String area, boolean enLinea) {
         this.id = id;
         this.nombre = nombre;
         this.area = area;
         this.enLinea = enLinea;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 

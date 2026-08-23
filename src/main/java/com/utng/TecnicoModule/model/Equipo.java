@@ -5,7 +5,7 @@ import java.time.LocalDate;
 /** Tabla: equipos */
 public class Equipo {
 
-    private int id;
+    private Long id;
     private String equipos; // nombre / etiqueta
     private String modelo;
     private String procesador;
@@ -24,7 +24,7 @@ public class Equipo {
     public Equipo() {
     }
 
-    public Equipo(int id, String equipos, String modelo, String procesador, String memoriaRam,
+    public Equipo(Long id, String equipos, String modelo, String procesador, String memoriaRam,
             String almacenamiento, int idSistemaOperativo, String sistemaOperativo,
             String lugar, String estado, int anioCreacion, int idUsuarioResponsable,
             String usuarioResponsable, LocalDate fechaCreacion, LocalDate fechaActualizacion) {
@@ -45,7 +45,7 @@ public class Equipo {
         this.fechaActualizacion = fechaActualizacion;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
@@ -105,7 +105,7 @@ public class Equipo {
         return fechaActualizacion;
     }
 
-    public void setId(int v) {
+    public void setId(long v) {
         this.id = v;
     }
 

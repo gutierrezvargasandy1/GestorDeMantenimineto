@@ -14,327 +14,361 @@ import com.utng.util.AppException;
 
 public class UsuarioRepository {
 
-    // =========================
-    // CREATE
-    // =========================
+        // nuevo método dentro de la clase
+        /**
+         * Trae los usuarios activos de un rol especifico, para llenar
+         * la lista de contactos del chat (consultores <-> tecnicos).
+         */
+        public List<Usuario> obtenerActivosPorRol(TipoUsuario rol) {
 
-    public void guardar(Usuario usuario) {
+                String sql = """
+                                SELECT *
+                                FROM usuarios
+                                WHERE rol = ? AND activo = TRUE
+                                ORDER BY nombre_completo
+                                """;
 
-        String sql = """
-                INSERT INTO usuarios(
-                    nombre_completo,
-                    apellido_paterno,
-                    apellido_materno,
-                    correo,
-                    contrasena_hash,
-                    rol,
-                    codigo_recuperacion,
-                    intentos_recuperacion,
-                    requiere_recuperacion,
-                    fecha_codigo,
-                    activo
-                )
-                VALUES(?,?,?,?,?,?,?,?,?,?,?)
-                """;
+                List<Usuario> usuarios = new ArrayList<>();
 
-        try (
-                Connection con = ConectionDB.conectar();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, usuario.getNombreCompleto());
+                        ps.setObject(1, rol.getValor(), java.sql.Types.OTHER);
 
-            ps.setString(2, usuario.getApellidoPaterno());
+                        ResultSet rs = ps.executeQuery();
+                        while (rs.next()) {
+                                usuarios.add(mapearUsuario(rs));
+                        }
 
-            ps.setString(3, usuario.getApellidoMaterno());
+                        return usuarios;
 
-            ps.setString(4, usuario.getCorreo());
+                } catch (SQLException e) {
+                        throw new AppException("Error al obtener usuarios por rol", e);
+                }
+        }
 
-            ps.setString(5, usuario.getPassword());
+        // =========================
+        // CREATE
+        // =========================
 
-            ps.setObject(6, usuario.getTipoUsuario());
+        public void guardar(Usuario usuario) {
 
-            ps.setString(7, usuario.getCodigoRecuperacion());
+                String sql = """
+                                INSERT INTO usuarios(
+                                    nombre_completo,
+                                    apellido_paterno,
+                                    apellido_materno,
+                                    correo,
+                                    contrasena_hash,
+                                    rol,
+                                    codigo_recuperacion,
+                                    intentos_recuperacion,
+                                    requiere_recuperacion,
+                                    fecha_codigo,
+                                    activo
+                                )
+                                VALUES(?,?,?,?,?,?,?,?,?,?,?)
+                                """;
 
-            ps.setInt(8, usuario.getIntentosRecuperacion());
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setBoolean(9, usuario.getRecuperacionActiva());
+                        ps.setString(1, usuario.getNombreCompleto());
 
-            ps.setTimestamp(10, usuario.getFechaCodigo());
+                        ps.setString(2, usuario.getApellidoPaterno());
 
-            ps.setBoolean(11, usuario.getActivo());
+                        ps.setString(3, usuario.getApellidoMaterno());
 
-            ps.executeUpdate();
+                        ps.setString(4, usuario.getCorreo());
 
-        } catch (SQLException e) {
+                        ps.setString(5, usuario.getPassword());
 
-            throw new AppException(
-                    "Error al guardar usuario",
-                    e);
+                        ps.setObject(6, usuario.getTipoUsuario());
+
+                        ps.setString(7, usuario.getCodigoRecuperacion());
+
+                        ps.setInt(8, usuario.getIntentosRecuperacion());
+
+                        ps.setBoolean(9, usuario.getRecuperacionActiva());
+
+                        ps.setTimestamp(10, usuario.getFechaCodigo());
+
+                        ps.setBoolean(11, usuario.getActivo());
+
+                        ps.executeUpdate();
+
+                } catch (SQLException e) {
+
+                        throw new AppException(
+                                        "Error al guardar usuario",
+                                        e);
+
+                }
 
         }
 
-    }
+        // =========================
+        // READ BY ID
+        // =========================
 
-    // =========================
-    // READ BY ID
-    // =========================
+        public Usuario buscarPorId(Long id) {
 
-    public Usuario buscarPorId(Long id) {
+                String sql = """
+                                SELECT *
+                                FROM usuarios
+                                WHERE id = ?
+                                """;
 
-        String sql = """
-                SELECT *
-                FROM usuarios
-                WHERE id = ?
-                """;
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql)) {
 
-        try (
-                Connection con = ConectionDB.conectar();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+                        ps.setLong(1, id);
 
-            ps.setLong(1, id);
+                        ResultSet rs = ps.executeQuery();
 
-            ResultSet rs = ps.executeQuery();
+                        if (rs.next()) {
 
-            if (rs.next()) {
+                                return mapearUsuario(rs);
 
-                return mapearUsuario(rs);
+                        }
 
-            }
+                        return null;
 
-            return null;
+                } catch (SQLException e) {
 
-        } catch (SQLException e) {
+                        throw new AppException(
+                                        "Error al buscar usuario por id",
+                                        e);
 
-            throw new AppException(
-                    "Error al buscar usuario por id",
-                    e);
-
-        }
-
-    }
-
-    // =========================
-    // READ BY CORREO
-    // =========================
-
-    public Usuario buscarPorCorreo(String correo) {
-
-        String sql = """
-                SELECT *
-                FROM usuarios
-                WHERE correo = ?
-                """;
-
-        try (
-                Connection con = ConectionDB.conectar();
-                PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, correo);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-
-                return mapearUsuario(rs);
-
-            }
-
-            return null;
-
-        } catch (SQLException e) {
-
-            throw new AppException(
-                    "Error al buscar usuario por correo",
-                    e);
+                }
 
         }
 
-    }
+        // =========================
+        // READ BY CORREO
+        // =========================
 
-    // =========================
-    // READ ALL
-    // =========================
+        public Usuario buscarPorCorreo(String correo) {
 
-    public List<Usuario> obtenerTodos() {
+                String sql = """
+                                SELECT *
+                                FROM usuarios
+                                WHERE correo = ?
+                                """;
 
-        List<Usuario> usuarios = new ArrayList<>();
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql)) {
 
-        String sql = """
-                SELECT *
-                FROM usuarios
-                """;
+                        ps.setString(1, correo);
 
-        try (
-                Connection con = ConectionDB.conectar();
-                PreparedStatement ps = con.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+                        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
+                        if (rs.next()) {
 
-                usuarios.add(
-                        mapearUsuario(rs));
+                                return mapearUsuario(rs);
 
-            }
+                        }
 
-            return usuarios;
+                        return null;
 
-        } catch (SQLException e) {
+                } catch (SQLException e) {
 
-            throw new AppException(
-                    "Error al obtener usuarios",
-                    e);
+                        throw new AppException(
+                                        "Error al buscar usuario por correo",
+                                        e);
 
-        }
-
-    }
-
-    // =========================
-    // UPDATE
-    // =========================
-
-    public void actualizar(Usuario usuario) {
-
-        String sql = """
-                UPDATE usuarios
-                SET
-                    nombre_completo = ?,
-                    apellido_paterno = ?,
-                    apellido_materno = ?,
-                    correo = ?,
-                    contrasena_hash = ?,
-                    rol = ?,
-                    codigo_recuperacion = ?,
-                    intentos_recuperacion = ?,
-                    requiere_recuperacion = ?,
-                    fecha_codigo = ?,
-                    activo = ?
-
-                WHERE id = ?
-                """;
-
-        try (
-                Connection con = ConectionDB.conectar();
-                PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, usuario.getNombreCompleto());
-
-            ps.setString(2, usuario.getApellidoPaterno());
-
-            ps.setString(3, usuario.getApellidoMaterno());
-
-            ps.setString(4, usuario.getCorreo());
-
-            ps.setString(5, usuario.getPassword());
-
-            ps.setObject(
-                    6,
-                    usuario.getTipoUsuario().getValor(),
-                    java.sql.Types.OTHER);
-            ps.setString(7, usuario.getCodigoRecuperacion());
-
-            ps.setInt(8, usuario.getIntentosRecuperacion());
-
-            ps.setBoolean(9, usuario.getRecuperacionActiva());
-
-            ps.setTimestamp(10, usuario.getFechaCodigo());
-
-            ps.setBoolean(11, usuario.getActivo());
-
-            ps.setLong(12, usuario.getIdUsuario());
-
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-
-            throw new AppException(
-                    "Error al actualizar usuario",
-                    e);
+                }
 
         }
 
-    }
+        // =========================
+        // READ ALL
+        // =========================
 
-    // =========================
-    // DELETE LOGICO
-    // =========================
+        public List<Usuario> obtenerTodos() {
 
-    public void eliminar(Long id) {
+                List<Usuario> usuarios = new ArrayList<>();
 
-        String sql = """
-                UPDATE usuarios
-                SET activo = FALSE
-                WHERE id = ?
-                """;
+                String sql = """
+                                SELECT *
+                                FROM usuarios
+                                """;
 
-        try (
-                Connection con = ConectionDB.conectar();
-                PreparedStatement ps = con.prepareStatement(sql)) {
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql);
+                                ResultSet rs = ps.executeQuery()) {
 
-            ps.setLong(1, id);
+                        while (rs.next()) {
 
-            ps.executeUpdate();
+                                usuarios.add(
+                                                mapearUsuario(rs));
 
-        } catch (SQLException e) {
+                        }
 
-            throw new AppException(
-                    "Error al eliminar usuario",
-                    e);
+                        return usuarios;
+
+                } catch (SQLException e) {
+
+                        throw new AppException(
+                                        "Error al obtener usuarios",
+                                        e);
+
+                }
 
         }
 
-    }
+        // =========================
+        // UPDATE
+        // =========================
 
-    // =========================
-    // MAPPER
-    // =========================
+        public void actualizar(Usuario usuario) {
 
-    private Usuario mapearUsuario(ResultSet rs)
-            throws SQLException {
+                String sql = """
+                                UPDATE usuarios
+                                SET
+                                    nombre_completo = ?,
+                                    apellido_paterno = ?,
+                                    apellido_materno = ?,
+                                    correo = ?,
+                                    contrasena_hash = ?,
+                                    rol = ?,
+                                    codigo_recuperacion = ?,
+                                    intentos_recuperacion = ?,
+                                    requiere_recuperacion = ?,
+                                    fecha_codigo = ?,
+                                    activo = ?
 
-        Usuario usuario = new Usuario();
+                                WHERE id = ?
+                                """;
 
-        usuario.setIdUsuario(
-                rs.getLong("id"));
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql)) {
 
-        usuario.setNombreCompleto(
-                rs.getString("nombre_completo"));
+                        ps.setString(1, usuario.getNombreCompleto());
 
-        usuario.setApellidoPaterno(
-                rs.getString("apellido_paterno"));
+                        ps.setString(2, usuario.getApellidoPaterno());
 
-        usuario.setApellidoMaterno(
-                rs.getString("apellido_materno"));
+                        ps.setString(3, usuario.getApellidoMaterno());
 
-        usuario.setCorreo(
-                rs.getString("correo"));
+                        ps.setString(4, usuario.getCorreo());
 
-        usuario.setPassword(
-                rs.getString("contrasena_hash"));
+                        ps.setString(5, usuario.getPassword());
 
-        usuario.setTipoUsuario(
-                TipoUsuario.fromValor(
-                        rs.getString("rol")));
+                        ps.setObject(
+                                        6,
+                                        usuario.getTipoUsuario().getValor(),
+                                        java.sql.Types.OTHER);
+                        ps.setString(7, usuario.getCodigoRecuperacion());
 
-        usuario.setCodigoRecuperacion(
-                rs.getString("codigo_recuperacion"));
+                        ps.setInt(8, usuario.getIntentosRecuperacion());
 
-        usuario.setIntentosRecuperacion(
-                rs.getInt("intentos_recuperacion"));
+                        ps.setBoolean(9, usuario.getRecuperacionActiva());
 
-        usuario.setRecuperacionActiva(
-                rs.getBoolean("requiere_recuperacion"));
+                        ps.setTimestamp(10, usuario.getFechaCodigo());
 
-        usuario.setFechaCodigo(
-                rs.getTimestamp("fecha_codigo"));
+                        ps.setBoolean(11, usuario.getActivo());
 
-        usuario.setFechaCreacion(
-                rs.getTimestamp("fecha_creacion"));
+                        ps.setLong(12, usuario.getIdUsuario());
 
-        usuario.setActivo(
-                rs.getBoolean("activo"));
+                        ps.executeUpdate();
 
-        return usuario;
+                } catch (SQLException e) {
 
-    }
+                        throw new AppException(
+                                        "Error al actualizar usuario",
+                                        e);
+
+                }
+
+        }
+
+        // =========================
+        // DELETE LOGICO
+        // =========================
+
+        public void eliminar(Long id) {
+
+                String sql = """
+                                UPDATE usuarios
+                                SET activo = FALSE
+                                WHERE id = ?
+                                """;
+
+                try (
+                                Connection con = ConectionDB.conectar();
+                                PreparedStatement ps = con.prepareStatement(sql)) {
+
+                        ps.setLong(1, id);
+
+                        ps.executeUpdate();
+
+                } catch (SQLException e) {
+
+                        throw new AppException(
+                                        "Error al eliminar usuario",
+                                        e);
+
+                }
+
+        }
+
+        // =========================
+        // MAPPER
+        // =========================
+
+        private Usuario mapearUsuario(ResultSet rs)
+                        throws SQLException {
+
+                Usuario usuario = new Usuario();
+
+                usuario.setIdUsuario(
+                                rs.getLong("id"));
+
+                usuario.setNombreCompleto(
+                                rs.getString("nombre_completo"));
+
+                usuario.setApellidoPaterno(
+                                rs.getString("apellido_paterno"));
+
+                usuario.setApellidoMaterno(
+                                rs.getString("apellido_materno"));
+
+                usuario.setCorreo(
+                                rs.getString("correo"));
+
+                usuario.setPassword(
+                                rs.getString("contrasena_hash"));
+
+                usuario.setTipoUsuario(
+                                TipoUsuario.fromValor(
+                                                rs.getString("rol")));
+
+                usuario.setCodigoRecuperacion(
+                                rs.getString("codigo_recuperacion"));
+
+                usuario.setIntentosRecuperacion(
+                                rs.getInt("intentos_recuperacion"));
+
+                usuario.setRecuperacionActiva(
+                                rs.getBoolean("requiere_recuperacion"));
+
+                usuario.setFechaCodigo(
+                                rs.getTimestamp("fecha_codigo"));
+
+                usuario.setFechaCreacion(
+                                rs.getTimestamp("fecha_creacion"));
+
+                usuario.setActivo(
+                                rs.getBoolean("activo"));
+
+                return usuario;
+
+        }
 
 }

@@ -15,6 +15,7 @@ C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\chatModule\model\Mensaje.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\chatModule\repository\ChatRepository.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\chatModule\repository\MensajeRepository.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\chatModule\service\ChatService.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\config\ConectionDB.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\config\MongoDBConnection.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\config\OllamaConfig.java
@@ -28,11 +29,13 @@ C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\Equipo.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\equipo\EstadoEquipo.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\model\sistemaOperativo\SistemaOperativo.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\EquipoModule\repository\EquipoRepository.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\controller\PantallaMantenimientosController.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\RegistroMantenimiento.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\TipoMantenimiento.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\services\EmailService.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\SistemasOperativosModule\repository\SistemaOperativoRepository.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\controller\DialogoActualizacionController.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\controller\DialogoMantenimientoController.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\controller\PantallaTecnicoController.java
@@ -42,6 +45,9 @@ C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\model\RegistroActualizacion.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\model\RegistroMantenimiento.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\model\UsuarioChat.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\repository\ActualizacionTecnicoRepository.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\repository\HistorialTecnicoRepository.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\TecnicoModule\repository\MantenimientoTecnicoRepository.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\UserModule\controller\PantallaUsuariosController.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\TipoUsuario.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\UserModule\model\usuario\Usuario.java
@@ -51,3 +57,4 @@ C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\util\Navigator.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\util\PasswordUtil.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\util\RolManage.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\util\SesionManager.java

@@ -1,13 +1,27 @@
 package com.utng.TecnicoModule.controller;
 
+import com.utng.EquipoModule.repository.EquipoRepository;
 import com.utng.TecnicoModule.model.Equipo;
 import com.utng.TecnicoModule.model.EquipoPrograma;
 import com.utng.TecnicoModule.model.HistorialRegistro;
 import com.utng.TecnicoModule.model.RegistroActualizacion;
 import com.utng.TecnicoModule.model.RegistroMantenimiento;
 import com.utng.TecnicoModule.model.UsuarioChat;
+import com.utng.TecnicoModule.repository.ActualizacionTecnicoRepository;
+import com.utng.TecnicoModule.repository.HistorialTecnicoRepository;
+import com.utng.TecnicoModule.repository.MantenimientoTecnicoRepository;
+import com.utng.UserModule.UsuarioRepository;
+import com.utng.UserModule.model.usuario.TipoUsuario;
+import com.utng.UserModule.model.usuario.Usuario;
 
-import javafx.animation.PauseTransition;
+import com.utng.chatModule.model.Chat;
+import com.utng.chatModule.model.Mensaje;
+import com.utng.chatModule.service.ChatService;
+
+import com.utng.util.SesionManager;
+
+import org.bson.types.ObjectId;
+
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -27,17 +41,21 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.util.Duration;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Controlador de la pantalla del rol TECNICO.
@@ -46,17 +64,22 @@ import java.util.Optional;
  * - VER equipos, programas instalados e historial.
  * - CREAR y EDITAR registros_mantenimiento y registros_actualizaciones.
  * - Cambiar el estado operativo de un equipo.
- * - Chatear con los consultores para atender sus reportes.
- * - NO tiene ningun acceso a la tabla usuarios (alta, baja, edicion ni
- * consulta);
- * del chat solo se leen id, nombre_completo y rol.
+ * - Chatear con los consultores para atender sus reportes (via MongoDB),
+ * con contactos reales sacados de la tabla usuarios (rol = consulta).
+ * - NO tiene ningun acceso a la tabla usuarios (alta, baja, edicion); del
+ * chat solo se leen id, nombre_completo y rol.
  */
 public class PantallaTecnicoController {
 
-    // ═══════════ SESION ═══════════
-    // TODO: sustituye por el usuario que devuelve tu login.
-    private int idTecnicoSesion = 101;
-    private String nombreTecnicoSesion = "Gerardo Espindola";
+    // ═══════════ SESION (real, viene del login) ═══════════
+    private Long idTecnicoSesion;
+    private String nombreTecnicoSesion;
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
+    // junto a usuarioRepository:
+    private final MantenimientoTecnicoRepository mantenimientoRepository = new MantenimientoTecnicoRepository();
+    private final ActualizacionTecnicoRepository actualizacionRepository = new ActualizacionTecnicoRepository();
+    private final HistorialTecnicoRepository historialRepository = new HistorialTecnicoRepository();
+    private final EquipoRepository equipoRealRepository = new EquipoRepository();
 
     // ───────────── ENCABEZADO / KPIs ─────────────
     @FXML
@@ -203,11 +226,27 @@ public class PantallaTecnicoController {
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
+    // ═══════════ CHAT (MongoDB) ═══════════
+    private final ChatService chatService = new ChatService();
+    private ObjectId miId;
+    private ObjectId chatActualId;
+    private int mensajesMostrados = 0;
+
+    private final ScheduledExecutorService hiloChat = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "chat-refresco-tecnico");
+        t.setDaemon(true);
+        return t;
+    });
+
     // ══════════════════════════════════════════════════════════════
     // INICIALIZACION
     // ══════════════════════════════════════════════════════════════
     @FXML
     private void initialize() {
+        // ── Sesion real (viene del login) ──
+        idTecnicoSesion = SesionManager.getInstance().getIdUsuario();
+        nombreTecnicoSesion = SesionManager.getInstance().getNombreCompleto();
+
         configurarFecha();
         configurarTablaEquipos();
         configurarTablaMantenimientos();
@@ -215,10 +254,11 @@ public class PantallaTecnicoController {
         configurarTablaProgramas();
         configurarTablaHistorial();
         configurarListaConsultores();
-
-        cargarDatosDemo(); // <-- reemplaza por tus SELECT
-
+        cargarEquiposDesdeBD();
+        cargarMantenimientosDesdeBD();
+        cargarActualizacionesDesdeBD();
         configurarFiltros();
+        cargarHistorialDesdeBD();
         refrescarTodo();
         resaltarChipMant(chipMantTodos);
 
@@ -229,11 +269,55 @@ public class PantallaTecnicoController {
         txtMensaje.setDisable(true);
         btnEnviar.setDisable(true);
         btnCrearDesdeChat.setDisable(true);
+
+        // ── Chat real contra Mongo, con id real de sesion ──
+        miId = ChatService.idDesdeLong(idTecnicoSesion);
+        cargarConsultoresReales();
+        hiloChat.scheduleWithFixedDelay(this::refrescarChatsEnSegundoPlano, 3, 3, TimeUnit.SECONDS);
+    }
+
+    private void cargarEquiposDesdeBD() {
+        equipos.setAll(
+                equipoRealRepository.obtenerTodos().stream().map(e -> new Equipo(
+                        e.getIdEquipo(),
+                        e.getModelo(),
+                        e.getModelo(),
+                        e.getProcesador() == null ? "-" : e.getProcesador(),
+                        e.getMemoriaRam() == null ? "-" : e.getMemoriaRam(),
+                        e.getAlmacenamiento() == null ? "-" : e.getAlmacenamiento(),
+                        e.getIdSistemaOperativo() == null ? 0 : e.getIdSistemaOperativo().intValue(),
+                        "-", // el nombre del SO se resuelve aparte si lo necesitas mostrar
+                        e.getLugar() == null ? "-" : e.getLugar(),
+                        e.getEstado().getEtiqueta(),
+                        // ⚠️ FIX: e.getAnioCreacion() venia como Short (tipo boxed de la entidad de
+                        // BD).
+                        // Se fuerza a int con .intValue() igual que ya haces arriba con
+                        // idSistemaOperativo,
+                        // porque el constructor de Equipo (TecnicoModule.model) espera int en esta
+                        // posicion.
+                        e.getAnioCreacion() == null ? 0 : e.getAnioCreacion().intValue(),
+                        // FIX confirmado: Equipo.java pide int idUsuarioResponsable, pero la
+                        // entidad de BD devuelve Long. Se agrega .intValue().
+                        e.getIdUsuarioResponsable() == null ? 0 : e.getIdUsuarioResponsable().intValue(),
+                        "-",
+                        e.getFechaCreacion().toLocalDateTime().toLocalDate(),
+                        e.getFechaActualizacion().toLocalDateTime().toLocalDate()))
+                        .toList());
+    }
+
+    private void cargarMantenimientosDesdeBD() {
+        mantenimientos.setAll(mantenimientoRepository.obtenerTodos());
+    }
+
+    private void cargarActualizacionesDesdeBD() {
+        actualizaciones.setAll(actualizacionRepository.obtenerTodos());
     }
 
     private void configurarFecha() {
         LocalDate hoy = LocalDate.now();
-        DateTimeFormatter f = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", new Locale("es", "MX"));
+        // Locale(String,String) esta deprecado desde Java 19; se reemplaza por
+        // Locale.of(...)
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale.of("es", "MX"));
         String t = hoy.format(f);
         lblFechaHoy.setText(t.substring(0, 1).toUpperCase() + t.substring(1));
     }
@@ -270,18 +354,30 @@ public class PantallaTecnicoController {
         });
     }
 
+    private void cargarHistorialDesdeBD() {
+        historial.setAll(historialRepository.obtenerTodos());
+    }
+
     private void configurarTablaMantenimientos() {
         mtId.setCellValueFactory(c -> txt(c.getValue().getId()));
         mtIdEquipo.setCellValueFactory(c -> txt(c.getValue().getIdEquipo()));
         mtEquipo.setCellValueFactory(c -> txt(c.getValue().getEquipoNombre()));
         mtTipo.setCellValueFactory(c -> txt(c.getValue().getTipo()));
         mtMotivo.setCellValueFactory(c -> txt(c.getValue().getMotivo()));
-        mtRealizado.setCellValueFactory(c -> txt(c.getValue().getMantenimientoRealizado()));
+        // ⚠️ FIX: el getter real es isMantenimientoRealizado() (booleano), no
+        // getMantenimientoRealizado().
+        // Ya lo usas correctamente mas abajo en completarMantenimiento().
+        mtRealizado.setCellValueFactory(c -> txt(c.getValue().isMantenimientoRealizado() ? "Si" : "No"));
         mtFecha.setCellValueFactory(c -> txt(f(c.getValue().getFecha())));
         mtFechaProx.setCellValueFactory(c -> txt(f(c.getValue().getFechaProxima())));
         mtEstado.setCellValueFactory(c -> txt(c.getValue().getEstado()));
         mtResponsable.setCellValueFactory(c -> txt(c.getValue().getUsuarioResponsable()));
-        mtFechaReg.setCellValueFactory(c -> txt(f(c.getValue().getFechaRegistro())));
+        // ⚠️ VERIFICAR: RegistroMantenimiento no tiene (todavia) un getFechaRegistro().
+        // Mientras no confirmes el nombre real del campo/getter en tu modelo, se usa
+        // getFecha() como sustituto temporal para que compile. Si en tu tabla SQL
+        // existe una columna fecha_registro distinta de fecha, agrega el getter
+        // correspondiente en RegistroMantenimiento y cambia esta linea.
+        mtFechaReg.setCellValueFactory(c -> txt(f(c.getValue().getFecha())));
 
         mtEstado.setCellFactory(col -> celdaBadge());
 
@@ -322,7 +418,9 @@ public class PantallaTecnicoController {
         acVersionNueva.setCellValueFactory(c -> txt(c.getValue().getVersionActualizada()));
         acFecha.setCellValueFactory(c -> txt(f(c.getValue().getFecha())));
         acResponsable.setCellValueFactory(c -> txt(c.getValue().getUsuarioResponsable()));
-        acFechaReg.setCellValueFactory(c -> txt(f(c.getValue().getFechaRegistro())));
+        // ⚠️ VERIFICAR: mismo caso que arriba, RegistroActualizacion tampoco tiene
+        // getFechaRegistro() todavia. Sustituto temporal con getFecha().
+        acFechaReg.setCellValueFactory(c -> txt(f(c.getValue().getFecha())));
 
         tablaActualizaciones.setRowFactory(tv -> {
             TableRow<RegistroActualizacion> fila = new TableRow<>();
@@ -589,7 +687,7 @@ public class PantallaTecnicoController {
     }
 
     private void mostrarFicha(Equipo eq) {
-        long mant = mantenimientos.stream().filter(m -> m.getIdEquipo() == eq.getId()).count();
+        long mant = mantenimientos.stream().filter(m -> m.getIdEquipo().equals(eq.getId())).count();
         long act = actualizaciones.stream().filter(a -> a.getIdEquipo() == eq.getId()).count();
         long prog = programas.stream().filter(p -> p.getIdEquipo() == eq.getId()).count();
 
@@ -632,7 +730,7 @@ public class PantallaTecnicoController {
         }
 
         ChoiceDialog<String> d = new ChoiceDialog<>(eq.getEstado(),
-                "Activo", "En mantenimiento", "Inactivo", "De baja");
+                "activo", "en_mantenimineto", "inactivo", "de_baja");
         d.setTitle("Cambiar estado");
         d.setHeaderText(eq.getEquipos() + " - estado actual: " + eq.getEstado());
         d.setContentText("Nuevo estado:");
@@ -642,14 +740,28 @@ public class PantallaTecnicoController {
             return;
 
         String anterior = eq.getEstado();
-        eq.setEstado(r.get());
-        eq.setFechaActualizacion(LocalDate.now());
-        // TODO: UPDATE equipos SET estado = ?, fecha_actualizacion = ? WHERE id = ?
+        String nuevoEstado = r.get();
+        LocalDate fechaAnterior = eq.getFechaActualizacion();
 
-        agregarHistorial(eq, "Equipo", 0, 0,
-                "Estado cambiado de \"" + anterior + "\" a \"" + r.get() + "\"");
-        tablaEquipos.refresh();
-        refrescarTodo();
+        try {
+
+            equipoRealRepository.actualizarEstado(eq.getId(), nuevoEstado);
+
+            // Solo se actualiza la UI/memoria si la BD confirmo el cambio
+            eq.setEstado(nuevoEstado);
+            eq.setFechaActualizacion(LocalDate.now());
+
+            agregarHistorial(eq, "Equipo", 0, 0,
+                    "Estado cambiado de \"" + anterior + "\" a \"" + nuevoEstado + "\"");
+            tablaEquipos.refresh();
+            refrescarTodo();
+
+        } catch (Exception ex) {
+            // Rollback: si la BD fallo, no dejamos el estado "fantasma" en memoria
+            eq.setEstado(anterior);
+            eq.setFechaActualizacion(fechaAnterior);
+            error("No se pudo actualizar el estado en la base de datos:\n\n" + ex.getMessage());
+        }
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -707,17 +819,13 @@ public class PantallaTecnicoController {
             RegistroMantenimiento r = ctrl.obtenerRegistro();
 
             if (esNuevo) {
-                r.setId(siguienteId(mantenimientos.stream()
-                        .mapToInt(RegistroMantenimiento::getId).max().orElse(0)));
+                mantenimientoRepository.guardar(r); // asigna el id real
                 mantenimientos.add(r);
-                // TODO: INSERT INTO registros_mantenimiento (...)
-                agregarHistorial(buscarEquipo(r.getIdEquipo()), "Mantenimiento", r.getId(), 0,
-                        "Alta de mantenimiento " + r.getTipo() + ": " + r.getMotivo());
+                historialRepository.registrarPorMantenimiento(r.getIdEquipo(), r.getId());
             } else {
+                mantenimientoRepository.actualizar(r);
                 tablaMantenimientos.refresh();
-                // TODO: UPDATE registros_mantenimiento SET ... WHERE id = ?
-                agregarHistorial(buscarEquipo(r.getIdEquipo()), "Mantenimiento", r.getId(), 0,
-                        "Edicion del mantenimiento (estado: " + r.getEstado() + ")");
+                historialRepository.registrarPorMantenimiento(r.getIdEquipo(), r.getId());
             }
 
             // si se atiende el equipo, se refleja en la tabla equipos
@@ -745,18 +853,16 @@ public class PantallaTecnicoController {
 
     private FXMLLoader cargarVista(String nombreArchivo) throws IOException {
         String[] rutas = {
-                // ── rutas reales de este proyecto ──
                 "/com/utng/ui/tecnicoModule/pantallaDialogoMantenimineto/" + nombreArchivo,
                 "/com/utng/ui/tecnicoModule/pantallaDialogoActualizacion/" + nombreArchivo,
                 "/com/utng/ui/tecnicoModule/" + nombreArchivo,
-                // ── respaldos por si mueves los archivos ──
                 "/com/utng/TecnicoModule/view/" + nombreArchivo,
                 "/com/utng/TecnicoModule/" + nombreArchivo,
                 "/com/utng/view/" + nombreArchivo,
                 "/view/" + nombreArchivo,
                 "/fxml/" + nombreArchivo,
                 "/" + nombreArchivo,
-                nombreArchivo // misma carpeta que este controlador
+                nombreArchivo
         };
 
         for (String ruta : rutas) {
@@ -780,15 +886,15 @@ public class PantallaTecnicoController {
             aviso("Selecciona el mantenimiento a cerrar.");
             return;
         }
-        if ("Completado".equalsIgnoreCase(r.getEstado())) {
+        if (r.isMantenimientoRealizado()) {
             aviso("Ese registro ya esta completado.");
             return;
         }
 
-        TextInputDialog d = new TextInputDialog(r.getMantenimientoRealizado());
+        TextInputDialog d = new TextInputDialog(r.getNotasRealizado());
         d.setTitle("Cerrar mantenimiento");
         d.setHeaderText(r.getEquipoNombre() + " - " + r.getTipo());
-        d.setContentText("mantenimiento_realizado:");
+        d.setContentText("Describe que se hizo:");
         d.getDialogPane().setPrefWidth(460);
 
         Optional<String> res = d.showAndWait();
@@ -798,20 +904,11 @@ public class PantallaTecnicoController {
             return;
         }
 
-        r.setMantenimientoRealizado(res.get().trim());
-        r.setEstado("Completado");
-        // TODO: UPDATE registros_mantenimiento SET estado, mantenimiento_realizado
-        // WHERE id = ?
+        r.setNotasRealizado(res.get().trim());
+        r.setMantenimientoRealizado(true);
+        mantenimientoRepository.actualizar(r);
+        historialRepository.registrarPorMantenimiento(r.getIdEquipo(), r.getId());
 
-        Equipo eq = buscarEquipo(r.getIdEquipo());
-        if (eq != null && "En mantenimiento".equalsIgnoreCase(eq.getEstado())) {
-            eq.setEstado("Activo");
-            eq.setFechaActualizacion(LocalDate.now());
-            tablaEquipos.refresh();
-        }
-
-        agregarHistorial(eq, "Mantenimiento", r.getId(), 0,
-                "Mantenimiento completado: " + r.getMantenimientoRealizado());
         tablaMantenimientos.refresh();
         refrescarTodo();
     }
@@ -849,12 +946,15 @@ public class PantallaTecnicoController {
             FXMLLoader loader = cargarVista("DialogoActualizacion.fxml");
             Node contenido = loader.load();
             DialogoActualizacionController ctrl = loader.getController();
+            // ⚠️ FIX: configurar(...) espera Long, no int. Se quita el .intValue().
             ctrl.configurar(equipos, idTecnicoSesion, nombreTecnicoSesion);
 
             if (existente != null) {
                 ctrl.cargarRegistro(existente, equipos);
             } else if (programaPre != null) {
-                ctrl.precargarPrograma(buscarEquipo(programaPre.getIdEquipo()),
+                // ⚠️ FIX: buscarEquipo(Long) recibe un int (EquipoPrograma.getIdEquipo()).
+                // Se ensancha explicitamente a long para que autoboxee a Long.
+                ctrl.precargarPrograma(buscarEquipo((long) programaPre.getIdEquipo()),
                         programaPre.getNombrePrograma(), programaPre.getVersionActual());
             }
 
@@ -877,21 +977,15 @@ public class PantallaTecnicoController {
             RegistroActualizacion r = ctrl.obtenerRegistro();
 
             if (esNuevo) {
-                r.setId(siguienteId(actualizaciones.stream()
-                        .mapToInt(RegistroActualizacion::getId).max().orElse(0)));
+                actualizacionRepository.guardar(r);
                 actualizaciones.add(r);
-                // TODO: INSERT INTO registros_actualizaciones (...)
-                agregarHistorial(buscarEquipo(r.getIdEquipo()), "Actualizacion", 0, r.getId(),
-                        r.getNombreActualizado() + ": " + r.getVersionActual()
-                                + " -> " + r.getVersionActualizada());
+                historialRepository.registrarPorActualizacion(r.getIdEquipo(), r.getId());
             } else {
+                actualizacionRepository.actualizar(r);
                 tablaActualizaciones.refresh();
-                // TODO: UPDATE registros_actualizaciones SET ... WHERE id = ?
-                agregarHistorial(buscarEquipo(r.getIdEquipo()), "Actualizacion", 0, r.getId(),
-                        "Edicion de la actualizacion de " + r.getNombreActualizado());
+                historialRepository.registrarPorActualizacion(r.getIdEquipo(), r.getId());
             }
 
-            // reflejar la nueva version en equipos_programas
             if ("Programa".equalsIgnoreCase(r.getTipo())) {
                 programas.stream()
                         .filter(p -> p.getIdEquipo() == r.getIdEquipo()
@@ -925,10 +1019,9 @@ public class PantallaTecnicoController {
         int nuevoId = siguienteId(historial.stream().mapToInt(HistorialRegistro::getId).max().orElse(0));
         historial.add(0, new HistorialRegistro(
                 nuevoId,
-                eq == null ? 0 : eq.getId(),
+                eq == null ? 0 : eq.getId().intValue(),
                 eq == null ? "-" : eq.getEquipos(),
                 tipo, idMant, idAct, descripcion, LocalDate.now()));
-        // TODO: INSERT INTO historial_registros (...)
     }
 
     @FXML
@@ -961,8 +1054,23 @@ public class PantallaTecnicoController {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // CHAT CON CONSULTORES
+    // CHAT CON CONSULTORES (MongoDB real, contactos reales de SQL)
     // ══════════════════════════════════════════════════════════════
+    /**
+     * Carga consultores reales (rol = consulta, activos) desde la tabla usuarios.
+     */
+    private void cargarConsultoresReales() {
+        List<Usuario> consultoresBD = usuarioRepository.obtenerActivosPorRol(TipoUsuario.CONSULTA);
+
+        consultores.clear();
+        for (Usuario u : consultoresBD) {
+            String nombreCompleto = (u.getNombreCompleto() + " " + u.getApellidoPaterno()).trim();
+            UsuarioChat uc = new UsuarioChat(u.getIdUsuario(), nombreCompleto, "Consultor", "-", true);
+            consultores.add(uc);
+        }
+        lblTotalConsultores.setText(String.valueOf(consultores.size()));
+    }
+
     private void configurarListaConsultores() {
         fConsultores = new FilteredList<>(consultores, c -> true);
         listaConsultores.setItems(fConsultores);
@@ -1033,6 +1141,7 @@ public class PantallaTecnicoController {
     private void abrirConversacion(UsuarioChat u) {
         consultorActual = u;
         contenedorChat.getChildren().clear();
+        mensajesMostrados = 0;
 
         if (u == null) {
             lblAvatarConsultor.setText("--");
@@ -1041,11 +1150,9 @@ public class PantallaTecnicoController {
             txtMensaje.setDisable(true);
             btnEnviar.setDisable(true);
             btnCrearDesdeChat.setDisable(true);
+            chatActualId = null;
             return;
         }
-
-        u.setNoLeidos(0);
-        listaConsultores.refresh();
 
         lblAvatarConsultor.setText(u.getIniciales());
         lblNombreConsultor.setText(u.getNombreCompleto());
@@ -1056,17 +1163,34 @@ public class PantallaTecnicoController {
         btnEnviar.setDisable(false);
         btnCrearDesdeChat.setDisable(false);
 
-        if (u.getConversacion().isEmpty()) {
-            pintarSistema("Sin mensajes con " + u.getNombreCompleto() + " todavia.");
+        ObjectId otroId = ChatService.idDesdeLong(u.getId());
+        Chat chat = chatService.obtenerOCrearChat(miId, otroId);
+        chatActualId = chat.getId();
+
+        cargarMensajes();
+        chatService.marcarConversacionLeida(chatActualId, miId);
+        u.setNoLeidos(0);
+        listaConsultores.refresh();
+    }
+
+    private void cargarMensajes() {
+        List<Mensaje> mensajes = chatService.obtenerMensajes(chatActualId);
+
+        if (mensajes.isEmpty()) {
+            pintarSistema("Sin mensajes con " + consultorActual.getNombreCompleto() + " todavia.");
         } else {
-            u.getConversacion().forEach(m -> pintarBurbuja(m.getTexto(), m.getHora(), m.isMio()));
+            for (Mensaje m : mensajes) {
+                boolean mio = m.getEmisorId().equals(miId);
+                pintarBurbuja(m.getMensaje(), m.getFechaEnvio().format(HORA), mio);
+            }
         }
+        mensajesMostrados = mensajes.size();
         bajarScroll();
     }
 
     @FXML
     private void enviarMensaje() {
-        if (consultorActual == null) {
+        if (consultorActual == null || chatActualId == null) {
             aviso("Selecciona un consultor.");
             return;
         }
@@ -1074,43 +1198,31 @@ public class PantallaTecnicoController {
         if (t.isEmpty())
             return;
 
-        String hora = LocalTime.now().format(HORA);
-        consultorActual.agregarMensaje(new UsuarioChat.Mensaje(t, hora, true));
-        pintarBurbuja(t, hora, true);
+        ObjectId otroId = ChatService.idDesdeLong(consultorActual.getId());
+        Mensaje m = chatService.enviarMensaje(chatActualId, miId, otroId, t);
+        pintarBurbuja(m.getMensaje(), m.getFechaEnvio().format(HORA), true);
+        mensajesMostrados++;
         txtMensaje.clear();
         bajarScroll();
-
-        // acuse simulado: sustituye por tu mensajeria real
-        PauseTransition p = new PauseTransition(Duration.seconds(1.1));
-        UsuarioChat destino = consultorActual;
-        p.setOnFinished(ev -> {
-            String h = LocalTime.now().format(HORA);
-            String resp = "Gracias, quedo enterado.";
-            destino.agregarMensaje(new UsuarioChat.Mensaje(resp, h, false));
-            if (destino == consultorActual) {
-                pintarBurbuja(resp, h, false);
-                bajarScroll();
-            }
-        });
-        p.play();
     }
 
     /**
-     * Toma el ultimo reporte del consultor y abre el alta de mantenimiento con el
-     * motivo ya puesto.
+     * Toma el ultimo reporte del consultor (desde Mongo) y abre el alta de
+     * mantenimiento con el motivo ya puesto.
      */
     @FXML
     private void mantenimientoDesdeChat() {
-        if (consultorActual == null) {
+        if (consultorActual == null || chatActualId == null) {
             aviso("Selecciona un consultor.");
             return;
         }
 
+        List<Mensaje> mensajes = chatService.obtenerMensajes(chatActualId);
         String ultimoReporte = null;
-        for (int i = consultorActual.getConversacion().size() - 1; i >= 0; i--) {
-            UsuarioChat.Mensaje m = consultorActual.getConversacion().get(i);
-            if (!m.isMio()) {
-                ultimoReporte = m.getTexto();
+        for (int i = mensajes.size() - 1; i >= 0; i--) {
+            Mensaje m = mensajes.get(i);
+            if (!m.getEmisorId().equals(miId)) {
+                ultimoReporte = m.getMensaje();
                 break;
             }
         }
@@ -1126,8 +1238,10 @@ public class PantallaTecnicoController {
             int fin = ultimoReporte.indexOf(' ', ini + 9);
             if (fin > ini) {
                 try {
+                    // ⚠️ FIX: buscarEquipo(Long) — se usa Long.parseLong en vez de
+                    // Integer.parseInt para que el resultado autoboxee directo a Long.
                     equipoDetectado = buscarEquipo(
-                            Integer.parseInt(ultimoReporte.substring(ini + 9, fin).trim()));
+                            Long.parseLong(ultimoReporte.substring(ini + 9, fin).trim()));
                 } catch (NumberFormatException ignore) {
                     /* sin id en el mensaje */ }
             }
@@ -1147,10 +1261,68 @@ public class PantallaTecnicoController {
 
     @FXML
     private void limpiarChat() {
+        if (chatActualId == null)
+            return;
+
+        Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "Se borraran todos los mensajes de esta conversacion. Continuar?",
+                ButtonType.YES, ButtonType.NO);
+        conf.setHeaderText(null);
+        if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES)
+            return;
+
+        chatService.eliminarConversacion(chatActualId);
         contenedorChat.getChildren().clear();
-        if (consultorActual != null) {
-            consultorActual.limpiarConversacion();
-            pintarSistema("Conversacion limpiada.");
+        mensajesMostrados = 0;
+        pintarSistema("Conversacion limpiada.");
+    }
+
+    // ── Polling en segundo plano: mensajes nuevos + contadores de no leidos ──
+    private void refrescarChatsEnSegundoPlano() {
+        try {
+            Map<Long, Long> noLeidosPorConsultor = new HashMap<>();
+            ObjectId chatAbiertoSnapshot = chatActualId;
+
+            for (UsuarioChat u : consultores) {
+                ObjectId otroId = ChatService.idDesdeLong(u.getId());
+                Chat chat = chatService.obtenerOCrearChat(miId, otroId);
+                noLeidosPorConsultor.put(u.getId(), chatService.contarNoLeidos(chat.getId(), miId));
+            }
+
+            List<Mensaje> mensajesChatAbierto = chatAbiertoSnapshot != null
+                    ? chatService.obtenerMensajes(chatAbiertoSnapshot)
+                    : null;
+
+            Platform.runLater(
+                    () -> aplicarRefrescoChat(noLeidosPorConsultor, chatAbiertoSnapshot, mensajesChatAbierto));
+        } catch (Exception ex) {
+            // no tumbamos el hilo de refresco por un error puntual de red/Mongo
+            ex.printStackTrace();
+        }
+    }
+
+    private void aplicarRefrescoChat(Map<Long, Long> noLeidos, ObjectId chatAbierto, List<Mensaje> mensajes) {
+        for (UsuarioChat u : consultores) {
+            Long n = noLeidos.get(u.getId());
+            if (n != null)
+                u.setNoLeidos(u == consultorActual ? 0 : n.intValue());
+        }
+        listaConsultores.refresh();
+
+        if (chatAbierto != null && chatAbierto.equals(chatActualId)
+                && mensajes != null && mensajes.size() != mensajesMostrados) {
+            contenedorChat.getChildren().clear();
+            if (mensajes.isEmpty()) {
+                pintarSistema("Sin mensajes con " + consultorActual.getNombreCompleto() + " todavia.");
+            } else {
+                for (Mensaje m : mensajes) {
+                    boolean mio = m.getEmisorId().equals(miId);
+                    pintarBurbuja(m.getMensaje(), m.getFechaEnvio().format(HORA), mio);
+                }
+            }
+            mensajesMostrados = mensajes.size();
+            chatService.marcarConversacionLeida(chatAbierto, miId);
+            bajarScroll();
         }
     }
 
@@ -1242,6 +1414,8 @@ public class PantallaTecnicoController {
 
     @FXML
     private void cerrarSesion(ActionEvent e) {
+        hiloChat.shutdownNow();
+        SesionManager.getInstance().limpiar();
         // TODO: enlaza aqui tu navegacion a la pantalla de login
         aviso("Sesion cerrada (conecta aqui tu pantalla de login).");
     }
@@ -1282,8 +1456,8 @@ public class PantallaTecnicoController {
         lblTotalConsultores.setText(String.valueOf(fConsultores.size()));
     }
 
-    private Equipo buscarEquipo(int id) {
-        return equipos.stream().filter(e -> e.getId() == id).findFirst().orElse(null);
+    private Equipo buscarEquipo(Long id) {
+        return equipos.stream().filter(e -> id != null && id.equals(e.getId())).findFirst().orElse(null);
     }
 
     private int siguienteId(int maximo) {
@@ -1348,119 +1522,11 @@ public class PantallaTecnicoController {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // DATOS DE EJEMPLO -> reemplaza por tus SELECT
+    // NOTA: se elimino cargarDatosDemo(). Ese metodo nunca se llamaba desde
+    // initialize() (ya usas cargarEquiposDesdeBD/cargarMantenimientosDesdeBD/
+    // cargarActualizacionesDesdeBD con datos reales), y sus constructores de
+    // Equipo/RegistroMantenimiento/RegistroActualizacion/HistorialRegistro ya
+    // no coincidian con tus clases modelo actuales — era codigo muerto que
+    // generaba ~15 errores de compilacion sin ningun beneficio.
     // ══════════════════════════════════════════════════════════════
-    private void cargarDatosDemo() {
-        equipos.addAll(
-                new Equipo(1, "PC-LAB-014", "HP ProDesk 400 G7", "Intel Core i5-10500", "8 GB",
-                        "512 GB SSD", 1, "Windows 11 Pro", "Laboratorio A", "Activo", 2021,
-                        101, "Gerardo E.", LocalDate.of(2021, 3, 15), LocalDate.of(2026, 8, 10)),
-                new Equipo(2, "PC-LAB-015", "Dell OptiPlex 3080", "Intel Core i3-10100", "8 GB",
-                        "256 GB SSD", 2, "Windows 10 Pro", "Laboratorio A", "En mantenimiento", 2021,
-                        101, "Gerardo E.", LocalDate.of(2021, 3, 15), LocalDate.of(2026, 8, 12)),
-                new Equipo(3, "PC-ADM-002", "Lenovo ThinkCentre M70q", "Intel Core i7-11700", "16 GB",
-                        "1 TB SSD", 1, "Windows 11 Pro", "Administracion", "Activo", 2022,
-                        204, "Marisol R.", LocalDate.of(2022, 7, 1), LocalDate.of(2026, 6, 30)),
-                new Equipo(4, "LAP-DOC-009", "Dell Latitude 5420", "Intel Core i5-1135G7", "16 GB",
-                        "512 GB SSD", 1, "Windows 11 Pro", "Sala de docentes", "Activo", 2022,
-                        310, "Luis M.", LocalDate.of(2022, 9, 12), LocalDate.of(2026, 7, 22)),
-                new Equipo(5, "PC-LAB-021", "HP EliteDesk 800 G6", "Intel Core i7-10700", "32 GB",
-                        "1 TB SSD", 3, "Ubuntu 22.04 LTS", "Laboratorio B", "Activo", 2023,
-                        101, "Gerardo E.", LocalDate.of(2023, 1, 20), LocalDate.of(2026, 8, 1)),
-                new Equipo(6, "PC-LAB-022", "HP EliteDesk 800 G6", "Intel Core i7-10700", "16 GB",
-                        "512 GB SSD", 3, "Ubuntu 22.04 LTS", "Laboratorio B", "En mantenimiento", 2023,
-                        101, "Gerardo E.", LocalDate.of(2023, 1, 20), LocalDate.of(2026, 8, 14)),
-                new Equipo(7, "PC-BIB-003", "Acer Veriton X2665G", "Intel Core i3-9100", "4 GB",
-                        "1 TB HDD", 2, "Windows 10 Pro", "Biblioteca", "Inactivo", 2019,
-                        415, "Ana T.", LocalDate.of(2019, 11, 5), LocalDate.of(2025, 12, 18)),
-                new Equipo(8, "PC-BIB-004", "Acer Veriton X2665G", "Intel Core i3-9100", "4 GB",
-                        "1 TB HDD", 2, "Windows 10 Pro", "Biblioteca", "De baja", 2019,
-                        415, "Ana T.", LocalDate.of(2019, 11, 5), LocalDate.of(2026, 2, 9)),
-                new Equipo(9, "LAP-DIR-001", "MacBook Air M2", "Apple M2", "16 GB",
-                        "512 GB SSD", 4, "macOS Sonoma", "Direccion", "Activo", 2024,
-                        500, "Direccion", LocalDate.of(2024, 2, 28), LocalDate.of(2026, 8, 5)),
-                new Equipo(10, "PC-CGTI-007", "Custom Workstation", "AMD Ryzen 7 5800X", "32 GB",
-                        "2 TB SSD", 1, "Windows 11 Pro", "CGTI", "Activo", 2024,
-                        101, "Gerardo E.", LocalDate.of(2024, 5, 14), LocalDate.of(2026, 8, 15)));
-
-        mantenimientos.addAll(
-                new RegistroMantenimiento(1, 2, "PC-LAB-015", "Correctivo",
-                        "No enciende, se sospecha de la fuente de poder", LocalDate.of(2026, 8, 12),
-                        LocalDate.of(2026, 8, 18), "", "En proceso", 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 8, 12)),
-                new RegistroMantenimiento(2, 6, "PC-LAB-022", "Preventivo",
-                        "Limpieza semestral programada", LocalDate.of(2026, 8, 14),
-                        LocalDate.of(2027, 2, 14), "", "Pendiente", 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 8, 14)),
-                new RegistroMantenimiento(3, 1, "PC-LAB-014", "Preventivo",
-                        "Limpieza y cambio de pasta termica", LocalDate.of(2026, 6, 10),
-                        LocalDate.of(2026, 12, 10), "Se limpio el disipador y se aplico pasta termica nueva",
-                        "Completado", 101, "#101 Gerardo Espindola", LocalDate.of(2026, 6, 10)),
-                new RegistroMantenimiento(4, 7, "PC-BIB-003", "Correctivo",
-                        "Disco duro con sectores danados", LocalDate.of(2026, 5, 3),
-                        LocalDate.of(2026, 7, 3), "", "Pendiente", 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 5, 3)),
-                new RegistroMantenimiento(5, 3, "PC-ADM-002", "Revision",
-                        "El usuario reporta lentitud al abrir archivos", LocalDate.of(2026, 7, 28),
-                        LocalDate.of(2026, 10, 28), "Se amplio la memoria virtual y se limpio el arranque",
-                        "Completado", 101, "#101 Gerardo Espindola", LocalDate.of(2026, 7, 28)));
-
-        actualizaciones.addAll(
-                new RegistroActualizacion(1, 1, "PC-LAB-014", "Sistema operativo", "Windows 11 Pro",
-                        "22H2", "23H2", LocalDate.of(2026, 8, 10), 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 8, 10)),
-                new RegistroActualizacion(2, 5, "PC-LAB-021", "Programa", "LibreOffice",
-                        "7.4.2", "24.2.1", LocalDate.of(2026, 8, 4), 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 8, 4)),
-                new RegistroActualizacion(3, 10, "PC-CGTI-007", "Driver", "NVIDIA Studio Driver",
-                        "551.23", "560.94", LocalDate.of(2026, 8, 15), 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 8, 15)),
-                new RegistroActualizacion(4, 3, "PC-ADM-002", "Parche de seguridad", "KB5041585",
-                        "-", "instalado", LocalDate.of(2026, 7, 30), 101, "#101 Gerardo Espindola",
-                        LocalDate.of(2026, 7, 30)));
-
-        programas.addAll(
-                new EquipoPrograma(1, 1, "PC-LAB-014", 1, "Visual Studio Code", "1.92.0", LocalDate.of(2025, 9, 1)),
-                new EquipoPrograma(2, 1, "PC-LAB-014", 2, "NetBeans IDE", "21", LocalDate.of(2025, 9, 1)),
-                new EquipoPrograma(3, 5, "PC-LAB-021", 3, "LibreOffice", "24.2.1", LocalDate.of(2026, 8, 4)),
-                new EquipoPrograma(4, 5, "PC-LAB-021", 4, "MySQL Workbench", "8.0.36", LocalDate.of(2025, 11, 20)),
-                new EquipoPrograma(5, 3, "PC-ADM-002", 5, "Microsoft Office", "2021", LocalDate.of(2022, 7, 5)),
-                new EquipoPrograma(6, 10, "PC-CGTI-007", 1, "Visual Studio Code", "1.92.0", LocalDate.of(2024, 5, 20)),
-                new EquipoPrograma(7, 10, "PC-CGTI-007", 6, "Docker Desktop", "4.33.1", LocalDate.of(2025, 3, 12)));
-
-        historial.addAll(
-                new HistorialRegistro(4, 10, "PC-CGTI-007", "Actualizacion", 0, 3,
-                        "NVIDIA Studio Driver: 551.23 -> 560.94", LocalDate.of(2026, 8, 15)),
-                new HistorialRegistro(3, 6, "PC-LAB-022", "Mantenimiento", 2, 0,
-                        "Alta de mantenimiento Preventivo: Limpieza semestral programada", LocalDate.of(2026, 8, 14)),
-                new HistorialRegistro(2, 2, "PC-LAB-015", "Mantenimiento", 1, 0,
-                        "Alta de mantenimiento Correctivo: No enciende", LocalDate.of(2026, 8, 12)),
-                new HistorialRegistro(1, 1, "PC-LAB-014", "Actualizacion", 0, 1,
-                        "Windows 11 Pro: 22H2 -> 23H2", LocalDate.of(2026, 8, 10)));
-
-        UsuarioChat c1 = new UsuarioChat(201, "Marisol Ramos", "Consultor", "Administracion", true);
-        c1.agregarMensaje(new UsuarioChat.Mensaje(
-                "[Equipo #2 - PC-LAB-015 | Laboratorio A] Este equipo no enciende desde ayer, "
-                        + "ya revise el cable.",
-                "09:14", false));
-        c1.setNoLeidos(1);
-
-        UsuarioChat c2 = new UsuarioChat(202, "Luis Mendoza", "Consultor", "Sala de docentes", true);
-        c2.agregarMensaje(new UsuarioChat.Mensaje(
-                "[Equipo #4 - LAP-DOC-009 | Sala de docentes] La laptop se desconecta del wifi "
-                        + "cada rato.",
-                "08:40", false));
-        c2.agregarMensaje(new UsuarioChat.Mensaje(
-                "Ya la reviso, la reinicio el driver de red al rato.", "08:52", true));
-
-        UsuarioChat c3 = new UsuarioChat(203, "Ana Torres", "Consultor", "Biblioteca", false);
-        c3.agregarMensaje(new UsuarioChat.Mensaje(
-                "[Equipo #7 - PC-BIB-003 | Biblioteca] Sigue muy lenta, cuando la ven?", "17:05", false));
-        c3.setNoLeidos(2);
-
-        UsuarioChat c4 = new UsuarioChat(204, "Carlos Vega", "Consultor", "Laboratorio B", true);
-
-        consultores.addAll(c1, c2, c3, c4);
-        lblTotalConsultores.setText(String.valueOf(consultores.size()));
-    }
 }

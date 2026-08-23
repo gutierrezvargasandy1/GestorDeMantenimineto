@@ -6,6 +6,7 @@ import com.utng.services.EmailService;
 import com.utng.util.AppException;
 import com.utng.util.PasswordUtil;
 import com.utng.util.RolManage;
+import com.utng.util.SesionManager;
 
 import java.security.SecureRandom;
 import java.sql.Timestamp;
@@ -113,6 +114,8 @@ public class AuthService {
             boolean res = PasswordUtil.verificarPassword(password, usuario.getPassword());
             if (res) {
                 RolManage.getInstance().setRol(usuario.getTipoUsuario()); // ← singleton
+                SesionManager.getInstance().setUsuario(usuario); // <-- AGREGADO
+
             }
             return res;
 

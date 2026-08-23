@@ -42,6 +42,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.util.StringConverter;
+// agrega estos imports
+import com.utng.EquipoModule.repository.EquipoRepository;
+import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
+import com.utng.UserModule.UsuarioRepository;
 
 /**
  * Controlador de la pantalla de gestión de equipos (CRUD).
@@ -62,6 +66,10 @@ public class PantallaEquiposController {
     private static final String CAMPO_TODOS = "Todos los campos";
     private static final String ESTADO_TODOS = "Todos los estados";
     private static final String LUGAR_TODOS = "Todos los lugares";
+    // agrega estos campos junto a los catálogos existentes
+    private final EquipoRepository equipoRepository = new EquipoRepository();
+    private final SistemaOperativoRepository sistemaOperativoRepository = new SistemaOperativoRepository();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -213,10 +221,10 @@ public class PantallaEquiposController {
     // ============================================================
     @FXML
     public void initialize() {
-        cargarCatalogos(); // TODO BD: sistemaOperativoRepository / usuarioRepository
+        cargarCatalogos();
         configurarTabla();
         configurarFiltros();
-        cargarDatosEstaticos(); // TODO BD: equipoRepository.obtenerTodos()
+        cargarEquiposDesdeBD();
         refrescarLugares();
         aplicarFiltros();
         cargarEstadisticas();
@@ -517,11 +525,7 @@ public class PantallaEquiposController {
         Optional<Equipo> resultado = abrirFormulario(null);
 
         resultado.ifPresent(nuevo -> {
-            // TODO BD: equipoRepository.guardar(nuevo);
-            Timestamp ahora = new Timestamp(System.currentTimeMillis());
-            nuevo.setIdEquipo(siguienteId());
-            nuevo.setFechaCreacion(ahora);
-            nuevo.setFechaActualizacion(ahora);
+            equipoRepository.guardar(nuevo); // asigna id y fechas reales de la BD
             datos.add(nuevo);
 
             refrescar();
@@ -548,9 +552,14 @@ public class PantallaEquiposController {
         Optional<Equipo> resultado = abrirFormulario(equipo);
 
         resultado.ifPresent(actualizado -> {
-            // TODO BD: equipoRepository.actualizar(actualizado);
-            // El trigger trg_equipos_actualizado hace esto mismo del lado de PostgreSQL.
-            actualizado.setFechaActualizacion(new Timestamp(System.currentTimeMillis()));
+            equipoRepository.actualizar(actualizado);
+
+            // el trigger trg_equipos_actualizado puso la fecha en la BD; la traemos para
+            // reflejarla
+            Equipo recargado = equipoRepository.buscarPorId(actualizado.getIdEquipo());
+            if (recargado != null) {
+                actualizado.setFechaActualizacion(recargado.getFechaActualizacion());
+            }
 
             refrescar();
             tablaEquipos.getSelectionModel().select(actualizado);
@@ -582,8 +591,7 @@ public class PantallaEquiposController {
                         + "actualizaciones, su historial y los programas instalados asociados.");
 
         if (confirmado) {
-            // TODO BD: equipoRepository.eliminar(equipo.getIdEquipo()); -> DELETE FROM
-            // equipos WHERE id = ?
+            equipoRepository.eliminar(equipo.getIdEquipo());
             datos.remove(equipo);
             refrescar();
             info("Equipo eliminado", "Se eliminó el equipo " + descripcionCorta(equipo) + ".");
@@ -917,27 +925,11 @@ public class PantallaEquiposController {
     // CATÁLOGOS ESTÁTICOS (sustituir por la BD más adelante)
     // ============================================================
     private void cargarCatalogos() {
+        catalogoSistemasOperativos.clear();
+        catalogoSistemasOperativos.addAll(sistemaOperativoRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, tipo, nombre, version_actual FROM sistemas_operativos
-        catalogoSistemasOperativos.addAll(List.of(
-                new SistemaOperativo(1L, "escritorio", "Windows 11 Pro", "23H2"),
-                new SistemaOperativo(2L, "escritorio", "Windows 10 Pro", "22H2"),
-                new SistemaOperativo(3L, "servidor", "Windows Server", "2019"),
-                new SistemaOperativo(4L, "escritorio", "Ubuntu", "22.04 LTS"),
-                new SistemaOperativo(5L, "escritorio", "Debian", "12"),
-                new SistemaOperativo(6L, "escritorio", "Fedora", "40"),
-                new SistemaOperativo(7L, "escritorio", "macOS Sonoma", "14.5")));
-
-        // TODO BD: SELECT id, nombre_completo, ... FROM usuarios WHERE activo = TRUE
-        catalogoResponsables.addAll(List.of(
-                responsable(1L, "Gerardo", "Espíndola", "Ramírez", TipoUsuario.ADMINISTRADOR),
-                responsable(2L, "Luis Ángel", "Ortega", "Mendoza", TipoUsuario.TECNICO),
-                responsable(3L, "Karla", "Núñez", "Salinas", TipoUsuario.TECNICO),
-                responsable(4L, "Diego", "Salas", "Ibarra", TipoUsuario.TECNICO),
-                responsable(5L, "Ana Sofía", "Ramírez", "Cortés", TipoUsuario.CONSULTA),
-                responsable(6L, "Jorge", "Medina", "Aguilar", TipoUsuario.CONSULTA),
-                responsable(7L, "Mariana", "Beltrán", "Ochoa", TipoUsuario.ADMINISTRADOR),
-                responsable(11L, "Fernanda", "Zamora", "Ríos", TipoUsuario.TECNICO)));
+        catalogoResponsables.clear();
+        catalogoResponsables.addAll(usuarioRepository.obtenerTodos());
     }
 
     private Usuario responsable(Long id, String nombre, String paterno, String materno, TipoUsuario tipo) {
@@ -963,55 +955,8 @@ public class PantallaEquiposController {
     // ============================================================
     // DATOS ESTÁTICOS (sustituir por la BD más adelante)
     // ============================================================
-    private void cargarDatosEstaticos() {
-        List<Equipo> demo = List.of(
-                crear(1L, "HP ProDesk 400 G7", "Laboratorio de Redes", "Intel Core i5-10500",
-                        "16GB", "512GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L,
-                        LocalDateTime.of(2025, 1, 20, 9, 15)),
-                crear(2L, "Dell OptiPlex 3080", "Laboratorio de Redes", "Intel Core i5-10505",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L,
-                        LocalDateTime.of(2025, 1, 20, 9, 40)),
-                crear(3L, "Lenovo ThinkCentre M75q", "Laboratorio de Software", "AMD Ryzen 5 4600GE",
-                        "16GB", "1TB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 3L,
-                        LocalDateTime.of(2025, 2, 5, 11, 0)),
-                crear(4L, "HP EliteDesk 800 G4", "Laboratorio de Software", "Intel Core i7-8700",
-                        "32GB", "1TB SSD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 3L,
-                        LocalDateTime.of(2025, 2, 14, 8, 30)),
-                crear(5L, "Dell Latitude 5420", "Dirección Académica", "Intel Core i7-1165G7",
-                        "16GB", "512GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 7L,
-                        LocalDateTime.of(2025, 3, 3, 10, 20)),
-                crear(6L, "Lenovo ThinkPad E14", "Control Escolar", "AMD Ryzen 5 5500U",
-                        "8GB", "256GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 2L, 6L,
-                        LocalDateTime.of(2025, 3, 18, 12, 45)),
-                crear(7L, "HP ProDesk 600 G6", "Control Escolar", "Intel Core i5-10500",
-                        "8GB", "1TB HDD", (short) 2020, EstadoEquipo.INACTIVO, 2L, 6L,
-                        LocalDateTime.of(2025, 4, 2, 15, 5)),
-                crear(8L, "Dell PowerEdge T40", "Site CGTI", "Intel Xeon E-2224G",
-                        "32GB", "2TB HDD", (short) 2020, EstadoEquipo.ACTIVO, 3L, 1L,
-                        LocalDateTime.of(2025, 4, 22, 9, 0)),
-                crear(9L, "Acer Veriton X2660G", "Biblioteca", "Intel Core i3-9100",
-                        "8GB", "500GB HDD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 4L,
-                        LocalDateTime.of(2025, 5, 9, 13, 30)),
-                crear(10L, "HP 280 Pro G6", "Biblioteca", "Intel Core i3-10100",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 4L,
-                        LocalDateTime.of(2025, 5, 27, 16, 10)),
-                crear(11L, "Dell OptiPlex 7010", "Laboratorio de Cómputo 1", "Intel Core i5-3470",
-                        "4GB", "500GB HDD", (short) 2013, EstadoEquipo.DE_BAJA, 2L, null,
-                        LocalDateTime.of(2025, 6, 11, 11, 25)),
-                crear(12L, "Lenovo ThinkCentre M720q", "Laboratorio de Cómputo 1", "Intel Core i5-9400T",
-                        "16GB", "512GB SSD", (short) 2020, EstadoEquipo.ACTIVO, 4L, 11L,
-                        LocalDateTime.of(2025, 7, 1, 8, 50)),
-                crear(13L, "Apple MacBook Air M1", "Diseño Multimedia", "Apple M1",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 7L, 5L,
-                        LocalDateTime.of(2025, 8, 14, 14, 0)),
-                crear(14L, "HP Compaq Pro 6300", "Almacén CGTI", "Intel Core i3-3220",
-                        "4GB", "320GB HDD", (short) 2012, EstadoEquipo.DE_BAJA, null, null,
-                        LocalDateTime.of(2026, 1, 9, 17, 35)),
-                crear(15L, "Dell Vostro 3681", "Recursos Humanos", "Intel Core i5-10400",
-                        "8GB", "1TB HDD", (short) 2021, EstadoEquipo.INACTIVO, 2L, 7L,
-                        LocalDateTime.of(2026, 2, 26, 10, 5)));
-
-        datos.setAll(demo);
+    private void cargarEquiposDesdeBD() {
+        datos.setAll(equipoRepository.obtenerTodos());
     }
 
     private Equipo crear(Long id, String modelo, String lugar, String procesador, String ram,

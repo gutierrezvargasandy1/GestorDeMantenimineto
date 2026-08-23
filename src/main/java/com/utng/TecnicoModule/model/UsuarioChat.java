@@ -34,7 +34,7 @@ public class UsuarioChat {
         }
     }
 
-    private final int id; // usuarios.id
+    private final Long id; // usuarios.id
     private final String nombreCompleto; // nombre_completo + apellidos
     private final String rol; // usuarios.rol -> "Consultor"
     private final String lugar; // contexto util para el tecnico
@@ -42,7 +42,7 @@ public class UsuarioChat {
     private int noLeidos;
     private final List<Mensaje> conversacion = new ArrayList<>();
 
-    public UsuarioChat(int id, String nombreCompleto, String rol, String lugar, boolean enLinea) {
+    public UsuarioChat(Long id, String nombreCompleto, String rol, String lugar, boolean enLinea) {
         this.id = id;
         this.nombreCompleto = nombreCompleto;
         this.rol = rol;
@@ -50,7 +50,7 @@ public class UsuarioChat {
         this.enLinea = enLinea;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 

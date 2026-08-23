@@ -202,3 +202,8 @@ COMMIT;
 -- 12. historial_registros tiene CHECK para asegurar que cada fila
 --     enlace al menos un mantenimiento o una actualización.
 -- =====================================================================
+
+
+
+ALTER TABLE registros_mantenimiento
+    ADD COLUMN notas_realizado TEXT;
