@@ -42,6 +42,7 @@ com\utng\MantenimientoModule\controller\PantallaMantenimientosController$4.class
 com\utng\MantenimientoModule\model\mantenimiento\RegistroMantenimiento.class
 com\utng\config\ConectionDB.class
 com\utng\chatModule\service\ChatService.class
+com\utng\MantenimientoModule\repository\MantenimientoRepository.class
 com\utng\EquipoModule\repository\EquipoRepository.class
 com\utng\EquipoModule\controller\PantallaEquiposController$4.class
 com\utng\DashboardModule\model\MantenimientoModel.class

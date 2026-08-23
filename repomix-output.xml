@@ -110,6 +110,8 @@ src/
               mantenimiento/
                 RegistroMantenimiento.java
                 TipoMantenimiento.java
+            repository/
+              MantenimientoRepository.java
           services/
             EmailService.java
           SistemasOperativosModule/
@@ -201,6 +203,161 @@ README.md
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/main/java/com/utng/MantenimientoModule/repository/MantenimientoRepository.java">
+package com.utng.MantenimientoModule.repository;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.utng.MantenimientoModule.model.mantenimiento.RegistroMantenimiento;
+import com.utng.MantenimientoModule.model.mantenimiento.TipoMantenimiento;
+import com.utng.config.ConectionDB;
+import com.utng.util.AppException;
+
+/**
+ * Repositorio real para la tabla registros_mantenimiento (DB.sql).
+ * Mismo estilo que EquipoRepository.
+ */
+public class MantenimientoRepository {
+
+    public List<RegistroMantenimiento> obtenerTodos() {
+        String sql = "SELECT * FROM registros_mantenimiento ORDER BY fecha DESC";
+        List<RegistroMantenimiento> lista = new ArrayList<>();
+
+        try (Connection con = ConectionDB.conectar();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            return lista;
+
+        } catch (SQLException e) {
+            throw new AppException("Error al obtener mantenimientos", e);
+        }
+    }
+
+    public RegistroMantenimiento buscarPorId(Long id) {
+        String sql = "SELECT * FROM registros_mantenimiento WHERE id = ?";
+
+        try (Connection con = ConectionDB.conectar();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
+            }
+
+        } catch (SQLException e) {
+            throw new AppException("Error al buscar mantenimiento por id", e);
+        }
+    }
+
+    /** Inserta el registro y le asigna el id real generado por la BD. */
+    public RegistroMantenimiento guardar(RegistroMantenimiento m) {
+        String sql = """
+                INSERT INTO registros_mantenimiento
+                    (id_equipo, fecha, motivo, tipo, fecha_proxima, mantenimiento_realizado)
+                VALUES (?, ?, ?, ?::tipo_mantenimiento, ?, ?)
+                RETURNING id
+                """;
+
+        try (Connection con = ConectionDB.conectar();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, m.getIdEquipo());
+            ps.setTimestamp(2, m.getFecha());
+            ps.setString(3, m.getMotivo());
+            ps.setString(4, m.getTipo().getValor());
+            setTimestampONull(ps, 5, m.getFechaProxima());
+            ps.setBoolean(6, m.isMantenimientoRealizado());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    m.setIdMantenimiento(rs.getLong("id"));
+                }
+            }
+            return m;
+
+        } catch (SQLException e) {
+            throw new AppException("Error al guardar mantenimiento", e);
+        }
+    }
+
+    public void actualizar(RegistroMantenimiento m) {
+        String sql = """
+                UPDATE registros_mantenimiento SET
+                    id_equipo = ?, fecha = ?, motivo = ?, tipo = ?::tipo_mantenimiento,
+                    fecha_proxima = ?, mantenimiento_realizado = ?
+                WHERE id = ?
+                """;
+
+        try (Connection con = ConectionDB.conectar();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, m.getIdEquipo());
+            ps.setTimestamp(2, m.getFecha());
+            ps.setString(3, m.getMotivo());
+            ps.setString(4, m.getTipo().getValor());
+            setTimestampONull(ps, 5, m.getFechaProxima());
+            ps.setBoolean(6, m.isMantenimientoRealizado());
+            ps.setLong(7, m.getIdMantenimiento());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new AppException("Error al actualizar mantenimiento", e);
+        }
+    }
+
+    /** Borrado fisico. Por ON DELETE CASCADE se va con el su historial. */
+    public void eliminar(Long id) {
+        String sql = "DELETE FROM registros_mantenimiento WHERE id = ?";
+
+        try (Connection con = ConectionDB.conectar();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new AppException("Error al eliminar mantenimiento", e);
+        }
+    }
+
+    // ================================================================
+    // HELPERS
+    // ================================================================
+
+    private RegistroMantenimiento mapear(ResultSet rs) throws SQLException {
+        RegistroMantenimiento m = new RegistroMantenimiento();
+        m.setIdMantenimiento(rs.getLong("id"));
+        m.setIdEquipo(rs.getLong("id_equipo"));
+        m.setFecha(rs.getTimestamp("fecha"));
+        m.setMotivo(rs.getString("motivo"));
+        m.setTipo(TipoMantenimiento.fromValor(rs.getString("tipo")));
+        m.setFechaProxima(rs.getTimestamp("fecha_proxima"));
+        m.setMantenimientoRealizado(rs.getBoolean("mantenimiento_realizado"));
+        return m;
+    }
+
+    private void setTimestampONull(PreparedStatement ps, int indice, Timestamp valor) throws SQLException {
+        if (valor == null) {
+            ps.setNull(indice, Types.TIMESTAMP);
+        } else {
+            ps.setTimestamp(indice, valor);
+        }
+    }
+}
+</file>
 
 <file path="src/main/java/com/utng/ActualizacionModule/controller/PantallaActualizacionesController.java">
 package com.utng.ActualizacionModule.controller;
@@ -3027,9 +3184,12 @@ import java.util.Optional;
 import com.utng.EquipoModule.model.equipo.Equipo;
 import com.utng.EquipoModule.model.equipo.EstadoEquipo;
 import com.utng.EquipoModule.model.sistemaOperativo.SistemaOperativo;
+import com.utng.EquipoModule.repository.EquipoRepository;
 import com.utng.MantenimientoModule.model.mantenimiento.RegistroMantenimiento;
 import com.utng.MantenimientoModule.model.mantenimiento.TipoMantenimiento;
-import com.utng.UserModule.model.usuario.TipoUsuario;
+import com.utng.MantenimientoModule.repository.MantenimientoRepository;
+import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
+import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.Navigator;
 
@@ -3103,6 +3263,10 @@ public class PantallaMantenimientosController {
     private static final String TIPO_TODOS = "Todos los tipos";
     private static final String SITUACION_TODAS = "Todas las situaciones";
     private static final String EQUIPO_TODOS = "Todos los equipos";
+    private final MantenimientoRepository mantenimientoRepository = new MantenimientoRepository();
+    private final EquipoRepository equipoRepository = new EquipoRepository();
+    private final SistemaOperativoRepository sistemaOperativoRepository = new SistemaOperativoRepository();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     /** Situación calculada a partir de mantenimiento_realizado y fecha_proxima. */
     private static final String SITUACION_REALIZADO = "Realizado";
@@ -3221,12 +3385,12 @@ public class PantallaMantenimientosController {
     // ============================================================
     @FXML
     public void initialize() {
-        cargarCatalogos(); // TODO BD: equipoRepository / usuarioRepository / sistemaOperativoRepository
+        cargarCatalogos();
         configurarTabla();
         configurarFiltros();
-        cargarDatosEstaticos(); // TODO BD: mantenimientoRepository.obtenerTodos()
         refrescarCombosDeFiltro();
         aplicarFiltros();
+        cargarDatosDesdeBD();
         cargarEstadisticas();
         actualizarEstadoBotones();
     }
@@ -3569,11 +3733,7 @@ public class PantallaMantenimientosController {
         Optional<RegistroMantenimiento> resultado = abrirFormulario(null);
 
         resultado.ifPresent(nuevo -> {
-            // TODO BD: mantenimientoRepository.guardar(nuevo);
-            // INSERT INTO registros_mantenimiento
-            // (id_equipo, fecha, motivo, tipo, fecha_proxima, mantenimiento_realizado)
-            // VALUES (?,?,?,?,?,?)
-            nuevo.setIdMantenimiento(siguienteId());
+            mantenimientoRepository.guardar(nuevo); // asigna el id real de la BD
             datos.add(nuevo);
 
             refrescar();
@@ -3602,9 +3762,7 @@ public class PantallaMantenimientosController {
         Optional<RegistroMantenimiento> resultado = abrirFormulario(mantenimiento);
 
         resultado.ifPresent(actualizado -> {
-            // TODO BD: mantenimientoRepository.actualizar(actualizado);
-            // UPDATE registros_mantenimiento SET id_equipo=?, fecha=?, motivo=?, tipo=?,
-            // fecha_proxima=?, mantenimiento_realizado=? WHERE id=?
+            mantenimientoRepository.actualizar(actualizado);
             refrescar();
             tablaMantenimientos.getSelectionModel().select(actualizado);
             info("Cambios guardados",
@@ -3639,9 +3797,7 @@ public class PantallaMantenimientosController {
                         + "registro. El equipo NO se elimina.");
 
         if (confirmado) {
-            // TODO BD:
-            // mantenimientoRepository.eliminar(mantenimiento.getIdMantenimiento());
-            // DELETE FROM registros_mantenimiento WHERE id = ?
+            mantenimientoRepository.eliminar(mantenimiento.getIdMantenimiento());
             datos.remove(mantenimiento);
             refrescar();
             info("Mantenimiento eliminado",
@@ -3991,88 +4147,14 @@ public class PantallaMantenimientosController {
     // CATÁLOGOS ESTÁTICOS (sustituir por la BD más adelante)
     // ============================================================
     private void cargarCatalogos() {
+        catalogoSistemasOperativos.clear();
+        catalogoSistemasOperativos.addAll(sistemaOperativoRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, tipo, nombre, version_actual FROM sistemas_operativos
-        catalogoSistemasOperativos.addAll(List.of(
-                new SistemaOperativo(1L, "escritorio", "Windows 11 Pro", "23H2"),
-                new SistemaOperativo(2L, "escritorio", "Windows 10 Pro", "22H2"),
-                new SistemaOperativo(3L, "servidor", "Windows Server", "2019"),
-                new SistemaOperativo(4L, "escritorio", "Ubuntu", "22.04 LTS"),
-                new SistemaOperativo(5L, "escritorio", "Debian", "12"),
-                new SistemaOperativo(6L, "escritorio", "Fedora", "40"),
-                new SistemaOperativo(7L, "escritorio", "macOS Sonoma", "14.5")));
+        catalogoResponsables.clear();
+        catalogoResponsables.addAll(usuarioRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, nombre_completo, ... FROM usuarios WHERE activo = TRUE
-        catalogoResponsables.addAll(List.of(
-                responsable(1L, "Gerardo", "Espíndola", "Ramírez", TipoUsuario.ADMINISTRADOR),
-                responsable(2L, "Luis Ángel", "Ortega", "Mendoza", TipoUsuario.TECNICO),
-                responsable(3L, "Karla", "Núñez", "Salinas", TipoUsuario.TECNICO),
-                responsable(4L, "Diego", "Salas", "Ibarra", TipoUsuario.TECNICO),
-                responsable(5L, "Ana Sofía", "Ramírez", "Cortés", TipoUsuario.CONSULTA),
-                responsable(6L, "Jorge", "Medina", "Aguilar", TipoUsuario.CONSULTA),
-                responsable(7L, "Mariana", "Beltrán", "Ochoa", TipoUsuario.ADMINISTRADOR),
-                responsable(11L, "Fernanda", "Zamora", "Ríos", TipoUsuario.TECNICO)));
-
-        // TODO BD: SELECT * FROM equipos
-        catalogoEquipos.addAll(List.of(
-                equipo(1L, "HP ProDesk 400 G7", "Laboratorio de Redes", "Intel Core i5-10500",
-                        "16GB", "512GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L),
-                equipo(2L, "Dell OptiPlex 3080", "Laboratorio de Redes", "Intel Core i5-10505",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L),
-                equipo(3L, "Lenovo ThinkCentre M75q", "Laboratorio de Software", "AMD Ryzen 5 4600GE",
-                        "16GB", "1TB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 3L),
-                equipo(4L, "HP EliteDesk 800 G4", "Laboratorio de Software", "Intel Core i7-8700",
-                        "32GB", "1TB SSD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 3L),
-                equipo(5L, "Dell Latitude 5420", "Dirección Académica", "Intel Core i7-1165G7",
-                        "16GB", "512GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 7L),
-                equipo(6L, "Lenovo ThinkPad E14", "Control Escolar", "AMD Ryzen 5 5500U",
-                        "8GB", "256GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 2L, 6L),
-                equipo(7L, "HP ProDesk 600 G6", "Control Escolar", "Intel Core i5-10500",
-                        "8GB", "1TB HDD", (short) 2020, EstadoEquipo.INACTIVO, 2L, 6L),
-                equipo(8L, "Dell PowerEdge T40", "Site CGTI", "Intel Xeon E-2224G",
-                        "32GB", "2TB HDD", (short) 2020, EstadoEquipo.ACTIVO, 3L, 1L),
-                equipo(9L, "Acer Veriton X2660G", "Biblioteca", "Intel Core i3-9100",
-                        "8GB", "500GB HDD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 4L),
-                equipo(10L, "HP 280 Pro G6", "Biblioteca", "Intel Core i3-10100",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 4L),
-                equipo(11L, "Dell OptiPlex 7010", "Laboratorio de Cómputo 1", "Intel Core i5-3470",
-                        "4GB", "500GB HDD", (short) 2013, EstadoEquipo.DE_BAJA, 2L, null),
-                equipo(12L, "Lenovo ThinkCentre M720q", "Laboratorio de Cómputo 1", "Intel Core i5-9400T",
-                        "16GB", "512GB SSD", (short) 2020, EstadoEquipo.ACTIVO, 4L, 11L),
-                equipo(13L, "Apple MacBook Air M1", "Diseño Multimedia", "Apple M1",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 7L, 5L),
-                equipo(14L, "HP Compaq Pro 6300", "Almacén CGTI", "Intel Core i3-3220",
-                        "4GB", "320GB HDD", (short) 2012, EstadoEquipo.DE_BAJA, null, null),
-                equipo(15L, "Dell Vostro 3681", "Recursos Humanos", "Intel Core i5-10400",
-                        "8GB", "1TB HDD", (short) 2021, EstadoEquipo.INACTIVO, 2L, 7L)));
-    }
-
-    private Equipo equipo(Long id, String modelo, String lugar, String procesador, String ram,
-            String almacenamiento, Short anio, EstadoEquipo estado, Long idSo, Long idResponsable) {
-
-        Equipo e = new Equipo();
-        e.setIdEquipo(id);
-        e.setModelo(modelo);
-        e.setLugar(lugar);
-        e.setProcesador(procesador);
-        e.setMemoriaRam(ram);
-        e.setAlmacenamiento(almacenamiento);
-        e.setAnioCreacion(anio);
-        e.setEstado(estado);
-        e.setIdSistemaOperativo(idSo);
-        e.setIdUsuarioResponsable(idResponsable);
-        return e;
-    }
-
-    private Usuario responsable(Long id, String nombre, String paterno, String materno, TipoUsuario tipo) {
-        Usuario u = new Usuario();
-        u.setIdUsuario(id);
-        u.setNombreCompleto(nombre);
-        u.setApellidoPaterno(paterno);
-        u.setApellidoMaterno(materno);
-        u.setTipoUsuario(tipo);
-        u.setActivo(true);
-        return u;
+        catalogoEquipos.clear();
+        catalogoEquipos.addAll(equipoRepository.obtenerTodos());
     }
 
     private static Equipo crearEquipoVacio() {
@@ -4086,89 +4168,9 @@ public class PantallaMantenimientosController {
     // ============================================================
     // DATOS ESTÁTICOS (sustituir por la BD más adelante)
     // ============================================================
-    private void cargarDatosEstaticos() {
-        // TODO BD: SELECT id, id_equipo, fecha, motivo, tipo, fecha_proxima,
-        // mantenimiento_realizado FROM registros_mantenimiento ORDER BY fecha DESC
-        List<RegistroMantenimiento> demo = List.of(
-                crear(1L, 1L, LocalDateTime.of(2026, 1, 15, 9, 0), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza interna y cambio de pasta térmica",
-                        LocalDateTime.of(2026, 7, 15, 9, 0), true),
-                crear(2L, 1L, LocalDateTime.of(2026, 7, 20, 10, 30), TipoMantenimiento.CORRECTIVO,
-                        "El equipo se reinicia solo al abrir aplicaciones pesadas",
-                        LocalDateTime.of(2026, 9, 20, 9, 0), false),
-                crear(3L, 2L, LocalDateTime.of(2026, 2, 3, 11, 15), TipoMantenimiento.PREVENTIVO,
-                        "Mantenimiento preventivo semestral del laboratorio",
-                        LocalDateTime.of(2026, 8, 3, 9, 0), false),
-                crear(4L, 3L, LocalDateTime.of(2026, 3, 11, 8, 45), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza de ventiladores y revisión de disipadores",
-                        LocalDateTime.of(2026, 9, 11, 9, 0), false),
-                crear(5L, 4L, LocalDateTime.of(2026, 6, 5, 13, 0), TipoMantenimiento.CORRECTIVO,
-                        "No enciende, se sospecha de la fuente de poder",
-                        LocalDateTime.of(2026, 8, 5, 9, 0), false),
-                crear(6L, 4L, LocalDateTime.of(2026, 7, 28, 9, 20), TipoMantenimiento.CORRECTIVO,
-                        "Cambio de fuente de poder de 500W",
-                        null, true),
-                crear(7L, 5L, LocalDateTime.of(2026, 4, 18, 16, 10), TipoMantenimiento.PREVENTIVO,
-                        "Respaldo de información y depuración de archivos temporales",
-                        LocalDateTime.of(2026, 10, 18, 9, 0), false),
-                crear(8L, 6L, LocalDateTime.of(2026, 5, 22, 10, 0), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza de teclado y revisión de bisagras",
-                        LocalDateTime.of(2026, 11, 22, 9, 0), true),
-                crear(9L, 7L, LocalDateTime.of(2026, 1, 30, 14, 40), TipoMantenimiento.CORRECTIVO,
-                        "Disco duro con sectores dañados, se recomienda reemplazo",
-                        LocalDateTime.of(2026, 4, 30, 9, 0), false),
-                crear(10L, 8L, LocalDateTime.of(2026, 6, 12, 7, 30), TipoMantenimiento.PREVENTIVO,
-                        "Mantenimiento del servidor: limpieza y revisión de la UPS",
-                        LocalDateTime.of(2026, 12, 12, 9, 0), true),
-                crear(11L, 9L, LocalDateTime.of(2026, 7, 9, 12, 5), TipoMantenimiento.CORRECTIVO,
-                        "Pantalla sin señal, se cambió la tarjeta de video",
-                        LocalDateTime.of(2027, 1, 9, 9, 0), true),
-                crear(12L, 9L, LocalDateTime.of(2026, 8, 14, 9, 0), TipoMantenimiento.PREVENTIVO,
-                        "Revisión general posterior al cambio de tarjeta de video",
-                        LocalDateTime.of(2027, 2, 14, 9, 0), false),
-                crear(13L, 10L, LocalDateTime.of(2026, 3, 27, 15, 25), TipoMantenimiento.PREVENTIVO,
-                        "Desfragmentación y revisión del disco duro",
-                        LocalDateTime.of(2026, 9, 27, 9, 0), false),
-                crear(14L, 11L, LocalDateTime.of(2026, 2, 19, 11, 50), TipoMantenimiento.CORRECTIVO,
-                        "Equipo obsoleto, se propone darlo de baja",
-                        null, true),
-                crear(15L, 12L, LocalDateTime.of(2026, 5, 6, 8, 15), TipoMantenimiento.PREVENTIVO,
-                        "Actualización de BIOS y limpieza interna",
-                        LocalDateTime.of(2026, 11, 6, 9, 0), true),
-                crear(16L, 13L, LocalDateTime.of(2026, 7, 31, 17, 0), TipoMantenimiento.CORRECTIVO,
-                        "La batería no retiene carga, se solicita reemplazo",
-                        LocalDateTime.of(2026, 8, 10, 9, 0), false),
-                crear(17L, 15L, LocalDateTime.of(2026, 6, 24, 10, 45), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza general y revisión de conexiones",
-                        LocalDateTime.of(2026, 12, 24, 9, 0), false),
-                crear(18L, 3L, LocalDateTime.of(2026, 8, 18, 9, 30), TipoMantenimiento.PREVENTIVO,
-                        "Mantenimiento programado del laboratorio de software",
-                        LocalDateTime.of(2027, 2, 18, 9, 0), false));
 
-        datos.setAll(demo);
-    }
-
-    private RegistroMantenimiento crear(Long id, Long idEquipo, LocalDateTime fecha,
-            TipoMantenimiento tipo, String motivo, LocalDateTime proxima, boolean realizado) {
-
-        RegistroMantenimiento m = new RegistroMantenimiento();
-        m.setIdMantenimiento(id);
-        m.setIdEquipo(idEquipo);
-        m.setFecha(Timestamp.valueOf(fecha));
-        m.setTipo(tipo);
-        m.setMotivo(motivo);
-        m.setFechaProxima(proxima == null ? null : Timestamp.valueOf(proxima));
-        m.setMantenimientoRealizado(realizado);
-        return m;
-    }
-
-    private Long siguienteId() {
-        long max = datos.stream()
-                .filter(m -> m.getIdMantenimiento() != null)
-                .mapToLong(RegistroMantenimiento::getIdMantenimiento)
-                .max()
-                .orElse(0L);
-        return max + 1;
+    private void cargarDatosDesdeBD() {
+        datos.setAll(mantenimientoRepository.obtenerTodos());
     }
 
     // ============================================================
@@ -16030,39 +16032,40 @@ public class UsuarioRepository {
         <Region prefHeight="14"/>
 
         <Button text="🏠  Dashboard" onAction="#irADashboard"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button text="👥  Usuarios" onAction="#irAUsuarios"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button text="👥  Usuarios" onAction="#irAUsuarios"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
+               -fx-font-weight: bold; -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-          <Button fx:id="btnEquipos" text="🖥  Sistemas Operativos" onAction="#irASistemasOperativos"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
-        <Button text="🔧  Mantenimientos" onAction="#irAMantenimientos"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button fx:id="btnSistemas" text="🖥  Sistemas Operativos" onAction="#irASistemasOperativos"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button text="🔄  Actualizaciones" onAction="#irAActualizaciones"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button text="🔧  Mantenimientos" onAction="#irAMantenimientos"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
+<Button text="🔄  Actualizaciones" onAction="#irAActualizaciones"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
 
 
@@ -16680,39 +16683,40 @@ public class LoginController {
         <Region prefHeight="14"/>
 
         <Button text="🏠  Dashboard" onAction="#irADashboard"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button text="👥  Usuarios" onAction="#irAUsuarios"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button fx:id="btnUsuarios" text="👥  Usuarios" onAction="#irAUsuarios"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
+               -fx-font-weight: bold; -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-         <Button fx:id="btnEquipos" text="🖥  Sistemas Operativos" onAction="#irASistemasOperativos"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
-        <Button text="🔧  Mantenimientos" onAction="#irAMantenimientos"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button fx:id="btnSistemas" text="🖥  Sistemas Operativos" onAction="#irASistemasOperativos"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
-        <Button text="🔄  Actualizaciones" onAction="#irAActualizaciones"
-                maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
-                       -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+<Button text="🔧  Mantenimientos" onAction="#irAMantenimientos"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
+<Button text="🔄  Actualizaciones" onAction="#irAActualizaciones"
+        maxWidth="Infinity" alignment="CENTER_LEFT"
+        style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+               -fx-background-radius: 9;
+               -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
 
 
@@ -19334,280 +19338,284 @@ public class Navigator {
 <StackPane xmlns:fx="http://javafx.com/fxml"
            fx:controller="com.utng.DashboardModule.controller.PantallaDashboardController">
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <VBox spacing="16"
-          style="-fx-background-color: linear-gradient(to bottom, #eef2f7 0%, #f7f8fa 320px);">
-        <padding>
-            <Insets top="20" right="30" bottom="20" left="30"/>
-        </padding>
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                style="-fx-background-color: transparent; -fx-background: transparent;
+                       -fx-border-color: transparent;">
 
-        <!-- ENCABEZADO -->
-        <HBox alignment="CENTER_LEFT" spacing="14">
-            <Button fx:id="btnMenu" text="☰" onAction="#toggleMenu"
-                    prefWidth="42" prefHeight="42"
-                    style="-fx-font-size: 17px; -fx-text-fill: #0f172a;
-                           -fx-background-color: white; -fx-background-radius: 10;
-                           -fx-border-color: #e2e8f0; -fx-border-radius: 10;
-                           -fx-cursor: hand;
-                           -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);"/>
+        <VBox spacing="16"
+              style="-fx-background-color: linear-gradient(to bottom, #eef2f7 0%, #f7f8fa 320px);">
+            <padding>
+                <Insets top="20" right="30" bottom="20" left="30"/>
+            </padding>
 
-            <VBox spacing="1">
-                <Label text="Gestor de Mantenimiento CGTI"
-                       style="-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                <Label text="CGTI - Soporte tecnico y mantenimiento de equipos de computo"
-                       style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;"/>
+            <!-- ENCABEZADO -->
+            <HBox alignment="CENTER_LEFT" spacing="14">
+                <Button fx:id="btnMenu" text="☰" onAction="#toggleMenu"
+                        prefWidth="42" prefHeight="42"
+                        style="-fx-font-size: 17px; -fx-text-fill: #0f172a;
+                               -fx-background-color: white; -fx-background-radius: 10;
+                               -fx-border-color: #e2e8f0; -fx-border-radius: 10;
+                               -fx-cursor: hand;
+                               -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);"/>
+
+                <VBox spacing="1">
+                    <Label text="Gestor de Mantenimiento CGTI"
+                           style="-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                    <Label text="CGTI - Soporte tecnico y mantenimiento de equipos de computo"
+                           style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;"/>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label fx:id="lblFechaHoy" text="Sabado, 8 de agosto"
+                       style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
+                              -fx-background-color: white; -fx-background-radius: 8;
+                              -fx-padding: 7 12 7 12;
+                              -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
+                <Button text="Nuevo mantenimiento"
+                        onAction="#nuevoMantenimiento"
+                        prefHeight="34"
+                        style="-fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
+                               -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;
+                               -fx-background-radius: 8; -fx-padding: 0 16 0 16; -fx-cursor: hand;
+                               -fx-effect: dropshadow(gaussian, rgba(29,78,216,0.35), 10, 0, 0, 3);"/>
+            </HBox>
+
+            <!-- TARJETAS KPI -->
+            <HBox spacing="12">
+                <!-- TOTAL -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="C" style="-fx-font-size: 12px; -fx-background-color: #eef2ff;
+                                           -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                           -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblTotalEquipos" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                        <Label text="Total de equipos"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- ACTIVOS -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="A" style="-fx-font-size: 12px; -fx-text-fill: #16a34a;
+                                          -fx-background-color: #dcfce7; -fx-background-radius: 8;
+                                          -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblEquiposActivos" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #16a34a;"/>
+                        <Label text="Activos"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- EN MANTENIMIENTO -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="M" style="-fx-font-size: 12px; -fx-background-color: #fef3c7;
+                                           -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                           -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblEnMantenimiento" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #f59e0b;"/>
+                        <Label text="En mantenimiento"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+
+                <!-- DE BAJA -->
+                <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+                             -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                             -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
+                    <Label text="B" style="-fx-font-size: 12px; -fx-background-color: #fee2e2;
+                                           -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
+                                           -fx-alignment: center;"/>
+                    <VBox spacing="1">
+                        <Label fx:id="lblEquiposBaja" text="0"
+                               style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #dc2626;"/>
+                        <Label text="De baja"
+                               style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
+                    </VBox>
+                </HBox>
+            </HBox>
+
+            <!-- PROXIMOS MANTENIMIENTOS -->
+            <VBox spacing="12"
+                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
+                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
+                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);">
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Proximos mantenimientos"
+                           style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="txtBuscar" promptText="Buscar..."
+                               prefWidth="200" prefHeight="30"
+                               onKeyReleased="#filtrarMantenimientos"
+                               style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                                      -fx-border-color: #e2e8f0; -fx-border-radius: 7;
+                                      -fx-font-size: 11.5px; -fx-padding: 0 10 0 10;"/>
+                    <ComboBox fx:id="cmbTipo" prefHeight="30" prefWidth="130"
+                              promptText="Todos los tipos" onAction="#filtrarMantenimientos"
+                              style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
+                                     -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
+                    <Button text="Ver todos" onAction="#verMantenimientos"
+                            style="-fx-background-color: #eef2ff; -fx-text-fill: #1d4ed8;
+                                   -fx-font-weight: bold; -fx-font-size: 11.5px;
+                                   -fx-background-radius: 7; -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- CHIPS DE ESTADO -->
+                <HBox spacing="8">
+                    <Button fx:id="chipTodos" text="Todos" onAction="#filtrarPorEstado"
+                            style="-fx-background-color: #0f172a; -fx-text-fill: white; -fx-font-size: 11px;
+                                   -fx-font-weight: bold; -fx-background-radius: 16;
+                                   -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
+
+                    <HBox fx:id="chipActivos" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #f0fdf4; -fx-background-radius: 16;
+                                 -fx-border-color: #bbf7d0; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="A" style="-fx-text-fill: #16a34a; -fx-font-size: 10px;"/>
+                        <Label text="Activos" style="-fx-text-fill: #15803d; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoActivos" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #16a34a; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+
+                    <HBox fx:id="chipMantenimiento" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #fffbeb; -fx-background-radius: 16;
+                                 -fx-border-color: #fde68a; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="M" style="-fx-text-fill: #f59e0b; -fx-font-size: 10px;"/>
+                        <Label text="En mantenimiento" style="-fx-text-fill: #b45309; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoMantenimiento" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #f59e0b; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+
+                    <HBox fx:id="chipInactivos" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #f8fafc; -fx-background-radius: 16;
+                                 -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="I" style="-fx-text-fill: #6b7280; -fx-font-size: 10px;"/>
+                        <Label text="Inactivos" style="-fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoInactivos" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #6b7280; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+
+                    <HBox fx:id="chipBaja" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
+                          style="-fx-background-color: #fef2f2; -fx-background-radius: 16;
+                                 -fx-border-color: #fecaca; -fx-border-radius: 16;
+                                 -fx-padding: 5 12 5 12; -fx-cursor: hand;">
+                        <Label text="B" style="-fx-text-fill: #dc2626; -fx-font-size: 10px;"/>
+                        <Label text="De baja" style="-fx-text-fill: #b91c1c; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label fx:id="lblEstadoBaja" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
+                                      -fx-background-color: #dc2626; -fx-background-radius: 9;
+                                      -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                    </HBox>
+                </HBox>
+
+                <TableView fx:id="tablaMantenimientos" prefHeight="160" minHeight="160"
+                           style="-fx-background-color: transparent; -fx-border-color: #eef1f5;
+                                  -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 11.5px;">
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="5">
+                            <Label text="No hay mantenimientos registrados"
+                                   style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+                        </VBox>
+                    </placeholder>
+                    <columns>
+                        <TableColumn fx:id="colEquipo"  text="Equipo"        prefWidth="150"/>
+                        <TableColumn fx:id="colUsuario" text="Usuario"       prefWidth="150"/>
+                        <TableColumn fx:id="colTipo"    text="Tipo"          prefWidth="110"/>
+                        <TableColumn fx:id="colMotivo"  text="Motivo"        prefWidth="190"/>
+                        <TableColumn fx:id="colTecnico" text="Tecnico"       prefWidth="140"/>
+                        <TableColumn fx:id="colFecha"   text="Proxima fecha" prefWidth="110"/>
+                        <TableColumn fx:id="colEstado"  text="Estado"        prefWidth="120"/>
+                    </columns>
+                </TableView>
             </VBox>
 
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <Label fx:id="lblFechaHoy" text="Sabado, 8 de agosto"
-                   style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
-                          -fx-background-color: white; -fx-background-radius: 8;
-                          -fx-padding: 7 12 7 12;
-                          -fx-border-color: #e2e8f0; -fx-border-radius: 8;"/>
-            <Button text="Nuevo mantenimiento"
-                    onAction="#nuevoMantenimiento"
-                    prefHeight="34"
-                    style="-fx-background-color: linear-gradient(to bottom right, #3b82f6, #1d4ed8);
-                           -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;
-                           -fx-background-radius: 8; -fx-padding: 0 16 0 16; -fx-cursor: hand;
-                           -fx-effect: dropshadow(gaussian, rgba(29,78,216,0.35), 10, 0, 0, 3);"/>
-        </HBox>
-
-        <!-- TARJETAS KPI -->
-        <HBox spacing="12">
-            <!-- TOTAL -->
-            <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
+            <!-- ASISTENTE IA -->
+            <VBox spacing="12"
+                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
                          -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="C" style="-fx-font-size: 12px; -fx-background-color: #eef2ff;
-                                       -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
-                                       -fx-alignment: center;"/>
-                <VBox spacing="1">
-                    <Label fx:id="lblTotalEquipos" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                    <Label text="Total de equipos"
-                           style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
-                </VBox>
-            </HBox>
+                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);">
 
-            <!-- ACTIVOS -->
-            <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
-                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="A" style="-fx-font-size: 12px; -fx-text-fill: #16a34a;
-                                      -fx-background-color: #dcfce7; -fx-background-radius: 8;
-                                      -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
-                <VBox spacing="1">
-                    <Label fx:id="lblEquiposActivos" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #16a34a;"/>
-                    <Label text="Activos"
-                           style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
-                </VBox>
-            </HBox>
-
-            <!-- EN MANTENIMIENTO -->
-            <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
-                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="M" style="-fx-font-size: 12px; -fx-background-color: #fef3c7;
-                                       -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
-                                       -fx-alignment: center;"/>
-                <VBox spacing="1">
-                    <Label fx:id="lblEnMantenimiento" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #f59e0b;"/>
-                    <Label text="En mantenimiento"
-                           style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
-                </VBox>
-            </HBox>
-
-            <!-- DE BAJA -->
-            <HBox alignment="CENTER_LEFT" spacing="10" HBox.hgrow="ALWAYS"
-                  style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 16 12 16;
-                         -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                         -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 8, 0, 0, 2);">
-                <Label text="B" style="-fx-font-size: 12px; -fx-background-color: #fee2e2;
-                                       -fx-background-radius: 8; -fx-min-width: 30; -fx-min-height: 30;
-                                       -fx-alignment: center;"/>
-                <VBox spacing="1">
-                    <Label fx:id="lblEquiposBaja" text="0"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #dc2626;"/>
-                    <Label text="De baja"
-                           style="-fx-font-size: 10.5px; -fx-text-fill: #94a3b8;"/>
-                </VBox>
-            </HBox>
-        </HBox>
-
-        <!-- PROXIMOS MANTENIMIENTOS -->
-        <VBox spacing="12"
-              style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
-                     -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                     -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);">
-
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Proximos mantenimientos"
-                       style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <TextField fx:id="txtBuscar" promptText="Buscar..."
-                           prefWidth="200" prefHeight="30"
-                           onKeyReleased="#filtrarMantenimientos"
-                           style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
-                                  -fx-border-color: #e2e8f0; -fx-border-radius: 7;
-                                  -fx-font-size: 11.5px; -fx-padding: 0 10 0 10;"/>
-                <ComboBox fx:id="cmbTipo" prefHeight="30" prefWidth="130"
-                          promptText="Todos los tipos" onAction="#filtrarMantenimientos"
-                          style="-fx-background-color: #f4f6fa; -fx-background-radius: 7;
-                                 -fx-border-color: #e2e8f0; -fx-border-radius: 7; -fx-font-size: 11.5px;"/>
-                <Button text="Ver todos" onAction="#verMantenimientos"
-                        style="-fx-background-color: #eef2ff; -fx-text-fill: #1d4ed8;
-                               -fx-font-weight: bold; -fx-font-size: 11.5px;
-                               -fx-background-radius: 7; -fx-padding: 7 12 7 12; -fx-cursor: hand;"/>
-            </HBox>
-
-            <!-- CHIPS DE ESTADO -->
-            <HBox spacing="8">
-                <Button fx:id="chipTodos" text="Todos" onAction="#filtrarPorEstado"
-                        style="-fx-background-color: #0f172a; -fx-text-fill: white; -fx-font-size: 11px;
-                               -fx-font-weight: bold; -fx-background-radius: 16;
-                               -fx-padding: 5 13 5 13; -fx-cursor: hand;"/>
-                
-                <HBox fx:id="chipActivos" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
-                      style="-fx-background-color: #f0fdf4; -fx-background-radius: 16;
-                             -fx-border-color: #bbf7d0; -fx-border-radius: 16;
-                             -fx-padding: 5 12 5 12; -fx-cursor: hand;">
-                    <Label text="A" style="-fx-text-fill: #16a34a; -fx-font-size: 10px;"/>
-                    <Label text="Activos" style="-fx-text-fill: #15803d; -fx-font-size: 11px; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblEstadoActivos" text="0"
-                           style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
-                                  -fx-background-color: #16a34a; -fx-background-radius: 9;
-                                  -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Rocky IA"
+                           style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="En linea"
+                           style="-fx-text-fill: #16a34a; -fx-font-size: 10.5px; -fx-font-weight: bold;
+                                  -fx-background-color: #f0fdf4; -fx-background-radius: 16;
+                                  -fx-padding: 5 10 5 10;"/>
+                    <Button text="Limpiar" onAction="#limpiarChat"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #64748b; -fx-font-size: 11px;
+                                   -fx-background-radius: 7; -fx-padding: 6 11 6 11; -fx-cursor: hand;"/>
                 </HBox>
-                
-                <HBox fx:id="chipMantenimiento" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
-                      style="-fx-background-color: #fffbeb; -fx-background-radius: 16;
-                             -fx-border-color: #fde68a; -fx-border-radius: 16;
-                             -fx-padding: 5 12 5 12; -fx-cursor: hand;">
-                    <Label text="M" style="-fx-text-fill: #f59e0b; -fx-font-size: 10px;"/>
-                    <Label text="En mantenimiento" style="-fx-text-fill: #b45309; -fx-font-size: 11px; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblEstadoMantenimiento" text="0"
-                           style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
-                                  -fx-background-color: #f59e0b; -fx-background-radius: 9;
-                                  -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
-                </HBox>
-                
-                <HBox fx:id="chipInactivos" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
-                      style="-fx-background-color: #f8fafc; -fx-background-radius: 16;
-                             -fx-border-color: #e2e8f0; -fx-border-radius: 16;
-                             -fx-padding: 5 12 5 12; -fx-cursor: hand;">
-                    <Label text="I" style="-fx-text-fill: #6b7280; -fx-font-size: 10px;"/>
-                    <Label text="Inactivos" style="-fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblEstadoInactivos" text="0"
-                           style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
-                                  -fx-background-color: #6b7280; -fx-background-radius: 9;
-                                  -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
-                </HBox>
-                
-                <HBox fx:id="chipBaja" alignment="CENTER_LEFT" spacing="6" onMouseClicked="#filtrarPorEstado"
-                      style="-fx-background-color: #fef2f2; -fx-background-radius: 16;
-                             -fx-border-color: #fecaca; -fx-border-radius: 16;
-                             -fx-padding: 5 12 5 12; -fx-cursor: hand;">
-                    <Label text="B" style="-fx-text-fill: #dc2626; -fx-font-size: 10px;"/>
-                    <Label text="De baja" style="-fx-text-fill: #b91c1c; -fx-font-size: 11px; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblEstadoBaja" text="0"
-                           style="-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;
-                                  -fx-background-color: #dc2626; -fx-background-radius: 9;
-                                  -fx-min-width: 18; -fx-alignment: center; -fx-padding: 1 5 1 5;"/>
-                </HBox>
-            </HBox>
 
-            <TableView fx:id="tablaMantenimientos" prefHeight="160"
-                       style="-fx-background-color: transparent; -fx-border-color: #eef1f5;
-                              -fx-border-radius: 8; -fx-background-radius: 8; -fx-font-size: 11.5px;">
-                <placeholder>
-                    <VBox alignment="CENTER" spacing="5">
-                        <Label text="No hay mantenimientos registrados"
-                               style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+                <ScrollPane fx:id="scrollChat" fitToWidth="true" hbarPolicy="NEVER"
+                            prefHeight="260" minHeight="260" maxHeight="260"
+                            style="-fx-background-color: #f8fafc; -fx-background: #f8fafc;
+                                   -fx-background-radius: 8; -fx-border-color: #eef1f5; -fx-border-radius: 8;">
+                    <VBox fx:id="contenedorChat" spacing="12" style="-fx-background-color: transparent;">
+                        <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
                     </VBox>
-                </placeholder>
-                <columns>
-                    <TableColumn fx:id="colEquipo"  text="Equipo"        prefWidth="150"/>
-                    <TableColumn fx:id="colUsuario" text="Usuario"       prefWidth="150"/>
-                    <TableColumn fx:id="colTipo"    text="Tipo"          prefWidth="110"/>
-                    <TableColumn fx:id="colMotivo"  text="Motivo"        prefWidth="190"/>
-                    <TableColumn fx:id="colTecnico" text="Tecnico"       prefWidth="140"/>
-                    <TableColumn fx:id="colFecha"   text="Proxima fecha" prefWidth="110"/>
-                    <TableColumn fx:id="colEstado"  text="Estado"        prefWidth="120"/>
-                </columns>
-            </TableView>
+                </ScrollPane>
+
+                <!-- SUGERENCIAS RAPIDAS -->
+                <HBox spacing="8">
+                    <Button text="Historial de un equipo" onAction="#usarSugerencia"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                   -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                   -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                    <Button text="Reporte del mes" onAction="#usarSugerencia"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                   -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                   -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                    <Button text="Servicios por tecnico" onAction="#usarSugerencia"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                   -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                   -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                    <Button text="Instalaciones de software" onAction="#usarSugerencia"
+                            style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
+                                   -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
+                                   -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- ENTRADA -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <TextField fx:id="txtPregunta" HBox.hgrow="ALWAYS" prefHeight="36"
+                               promptText="Escribe tu pregunta... (ej. mantenimientos del equipo PC-LAB-014)"
+                               onAction="#enviarPregunta"
+                               style="-fx-background-color: #f4f6fa; -fx-background-radius: 8;
+                                      -fx-border-color: #e2e8f0; -fx-border-radius: 8;
+                                      -fx-font-size: 11.5px; -fx-padding: 0 12 0 12;"/>
+                    <Button text="Enviar" onAction="#enviarPregunta" prefHeight="36"
+                            style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);
+                                   -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11.5px;
+                                   -fx-background-radius: 8; -fx-padding: 0 16 0 16; -fx-cursor: hand;
+                                   -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.35), 10, 0, 0, 3);"/>
+                </HBox>
+            </VBox>
         </VBox>
-
-        <!-- ASISTENTE IA -->
-        <VBox spacing="12"
-              style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 16;
-                     -fx-border-color: #e8ecf2; -fx-border-radius: 10;
-                     -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);">
-
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Rocky IA"
-                       style="-fx-font-size: 14.5px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label text="En linea"
-                       style="-fx-text-fill: #16a34a; -fx-font-size: 10.5px; -fx-font-weight: bold;
-                              -fx-background-color: #f0fdf4; -fx-background-radius: 16;
-                              -fx-padding: 5 10 5 10;"/>
-                <Button text="Limpiar" onAction="#limpiarChat"
-                        style="-fx-background-color: #f4f6fa; -fx-text-fill: #64748b; -fx-font-size: 11px;
-                               -fx-background-radius: 7; -fx-padding: 6 11 6 11; -fx-cursor: hand;"/>
-            </HBox>
-
-            <ScrollPane fx:id="scrollChat" fitToWidth="true" hbarPolicy="NEVER"
-                        prefHeight="260" minHeight="260" maxHeight="260"
-                        style="-fx-background-color: #f8fafc; -fx-background: #f8fafc;
-                               -fx-background-radius: 8; -fx-border-color: #eef1f5; -fx-border-radius: 8;">
-                <VBox fx:id="contenedorChat" spacing="12" style="-fx-background-color: transparent;">
-                    <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
-                </VBox>
-            </ScrollPane>
-
-            <!-- SUGERENCIAS RAPIDAS -->
-            <HBox spacing="8">
-                <Button text="Historial de un equipo" onAction="#usarSugerencia"
-                        style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
-                               -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
-                               -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
-                <Button text="Reporte del mes" onAction="#usarSugerencia"
-                        style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
-                               -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
-                               -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
-                <Button text="Servicios por tecnico" onAction="#usarSugerencia"
-                        style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
-                               -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
-                               -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
-                <Button text="Instalaciones de software" onAction="#usarSugerencia"
-                        style="-fx-background-color: #f4f6fa; -fx-text-fill: #475569; -fx-font-size: 10.5px;
-                               -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-radius: 16;
-                               -fx-padding: 6 12 6 12; -fx-cursor: hand;"/>
-            </HBox>
-
-            <!-- ENTRADA -->
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <TextField fx:id="txtPregunta" HBox.hgrow="ALWAYS" prefHeight="36"
-                           promptText="Escribe tu pregunta... (ej. mantenimientos del equipo PC-LAB-014)"
-                           onAction="#enviarPregunta"
-                           style="-fx-background-color: #f4f6fa; -fx-background-radius: 8;
-                                  -fx-border-color: #e2e8f0; -fx-border-radius: 8;
-                                  -fx-font-size: 11.5px; -fx-padding: 0 12 0 12;"/>
-                <Button text="Enviar" onAction="#enviarPregunta" prefHeight="36"
-                        style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #6366f1);
-                               -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11.5px;
-                               -fx-background-radius: 8; -fx-padding: 0 16 0 16; -fx-cursor: hand;
-                               -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.35), 10, 0, 0, 3);"/>
-            </HBox>
-        </VBox>
-    </VBox>
+    </ScrollPane>
 
     <!-- OVERLAY OSCURO -->
     <Region fx:id="overlayMenu" visible="false" managed="false"
@@ -19640,10 +19648,10 @@ public class Navigator {
 
         <Region prefHeight="14"/>
 
-        <Button text="🏠  Dashboard" onAction="#irADashboard"
+        <Button fx:id="btnDashboard" text="🏠  Dashboard" onAction="#irADashboard"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
-                       -fx-background-radius: 9;
+                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
+                       -fx-font-weight: bold; -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
 
         <Button text="👥  Usuarios" onAction="#irAUsuarios"
@@ -19654,16 +19662,16 @@ public class Navigator {
 
         <Button fx:id="btnEquipos" text="🖥  Equipos" onAction="#irAEquipos"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
+                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+                       -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
-       
-       
-               <Button fx:id="btnEquipos" text="🖥  Sistemas Operativos" onAction="#irASistemasOperativos"
+
+        <Button fx:id="btnSistemas" text="💿  Sistemas Operativos" onAction="#irASistemasOperativos"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
-                style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-size: 13px;
-                       -fx-font-weight: bold; -fx-background-radius: 9;
+                style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
+                       -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
+
         <Button text="🔧  Mantenimientos" onAction="#irAMantenimientos"
                 maxWidth="Infinity" alignment="CENTER_LEFT"
                 style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
@@ -19675,7 +19683,6 @@ public class Navigator {
                 style="-fx-background-color: transparent; -fx-text-fill: #cbd5e1; -fx-font-size: 13px;
                        -fx-background-radius: 9;
                        -fx-padding: 12 14 12 14; -fx-cursor: hand;"/>
-
 
         <Region VBox.vgrow="ALWAYS"/>
 
@@ -20521,12 +20528,13 @@ public class PantallaDashboardController {
     // ============================================================
     @FXML
     private void nuevoMantenimiento() {
-        System.out.println("Boton: Nuevo mantenimiento");
+        Navigator.navigate("/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
     }
 
     @FXML
     private void verMantenimientos() {
-        System.out.println("Boton: Ver mantenimientos");
+        Navigator.navigate("/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
+
     }
 }
 </file>

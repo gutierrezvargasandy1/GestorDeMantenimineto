@@ -643,11 +643,12 @@ public class PantallaDashboardController {
     // ============================================================
     @FXML
     private void nuevoMantenimiento() {
-        System.out.println("Boton: Nuevo mantenimiento");
+        Navigator.navigate("/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
     }
 
     @FXML
     private void verMantenimientos() {
-        System.out.println("Boton: Ver mantenimientos");
+        Navigator.navigate("/com/utng/ui/mantenimientoModules/pantallaMantenimientos/PantallaMantenimientos.fxml");
+
     }
 }

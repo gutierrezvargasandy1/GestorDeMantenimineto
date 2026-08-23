@@ -13,9 +13,12 @@ import java.util.Optional;
 import com.utng.EquipoModule.model.equipo.Equipo;
 import com.utng.EquipoModule.model.equipo.EstadoEquipo;
 import com.utng.EquipoModule.model.sistemaOperativo.SistemaOperativo;
+import com.utng.EquipoModule.repository.EquipoRepository;
 import com.utng.MantenimientoModule.model.mantenimiento.RegistroMantenimiento;
 import com.utng.MantenimientoModule.model.mantenimiento.TipoMantenimiento;
-import com.utng.UserModule.model.usuario.TipoUsuario;
+import com.utng.MantenimientoModule.repository.MantenimientoRepository;
+import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
+import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.Navigator;
 
@@ -89,6 +92,10 @@ public class PantallaMantenimientosController {
     private static final String TIPO_TODOS = "Todos los tipos";
     private static final String SITUACION_TODAS = "Todas las situaciones";
     private static final String EQUIPO_TODOS = "Todos los equipos";
+    private final MantenimientoRepository mantenimientoRepository = new MantenimientoRepository();
+    private final EquipoRepository equipoRepository = new EquipoRepository();
+    private final SistemaOperativoRepository sistemaOperativoRepository = new SistemaOperativoRepository();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     /** Situación calculada a partir de mantenimiento_realizado y fecha_proxima. */
     private static final String SITUACION_REALIZADO = "Realizado";
@@ -207,12 +214,12 @@ public class PantallaMantenimientosController {
     // ============================================================
     @FXML
     public void initialize() {
-        cargarCatalogos(); // TODO BD: equipoRepository / usuarioRepository / sistemaOperativoRepository
+        cargarCatalogos();
         configurarTabla();
         configurarFiltros();
-        cargarDatosEstaticos(); // TODO BD: mantenimientoRepository.obtenerTodos()
         refrescarCombosDeFiltro();
         aplicarFiltros();
+        cargarDatosDesdeBD();
         cargarEstadisticas();
         actualizarEstadoBotones();
     }
@@ -555,11 +562,7 @@ public class PantallaMantenimientosController {
         Optional<RegistroMantenimiento> resultado = abrirFormulario(null);
 
         resultado.ifPresent(nuevo -> {
-            // TODO BD: mantenimientoRepository.guardar(nuevo);
-            // INSERT INTO registros_mantenimiento
-            // (id_equipo, fecha, motivo, tipo, fecha_proxima, mantenimiento_realizado)
-            // VALUES (?,?,?,?,?,?)
-            nuevo.setIdMantenimiento(siguienteId());
+            mantenimientoRepository.guardar(nuevo); // asigna el id real de la BD
             datos.add(nuevo);
 
             refrescar();
@@ -588,9 +591,7 @@ public class PantallaMantenimientosController {
         Optional<RegistroMantenimiento> resultado = abrirFormulario(mantenimiento);
 
         resultado.ifPresent(actualizado -> {
-            // TODO BD: mantenimientoRepository.actualizar(actualizado);
-            // UPDATE registros_mantenimiento SET id_equipo=?, fecha=?, motivo=?, tipo=?,
-            // fecha_proxima=?, mantenimiento_realizado=? WHERE id=?
+            mantenimientoRepository.actualizar(actualizado);
             refrescar();
             tablaMantenimientos.getSelectionModel().select(actualizado);
             info("Cambios guardados",
@@ -625,9 +626,7 @@ public class PantallaMantenimientosController {
                         + "registro. El equipo NO se elimina.");
 
         if (confirmado) {
-            // TODO BD:
-            // mantenimientoRepository.eliminar(mantenimiento.getIdMantenimiento());
-            // DELETE FROM registros_mantenimiento WHERE id = ?
+            mantenimientoRepository.eliminar(mantenimiento.getIdMantenimiento());
             datos.remove(mantenimiento);
             refrescar();
             info("Mantenimiento eliminado",
@@ -977,88 +976,14 @@ public class PantallaMantenimientosController {
     // CATÁLOGOS ESTÁTICOS (sustituir por la BD más adelante)
     // ============================================================
     private void cargarCatalogos() {
+        catalogoSistemasOperativos.clear();
+        catalogoSistemasOperativos.addAll(sistemaOperativoRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, tipo, nombre, version_actual FROM sistemas_operativos
-        catalogoSistemasOperativos.addAll(List.of(
-                new SistemaOperativo(1L, "escritorio", "Windows 11 Pro", "23H2"),
-                new SistemaOperativo(2L, "escritorio", "Windows 10 Pro", "22H2"),
-                new SistemaOperativo(3L, "servidor", "Windows Server", "2019"),
-                new SistemaOperativo(4L, "escritorio", "Ubuntu", "22.04 LTS"),
-                new SistemaOperativo(5L, "escritorio", "Debian", "12"),
-                new SistemaOperativo(6L, "escritorio", "Fedora", "40"),
-                new SistemaOperativo(7L, "escritorio", "macOS Sonoma", "14.5")));
+        catalogoResponsables.clear();
+        catalogoResponsables.addAll(usuarioRepository.obtenerTodos());
 
-        // TODO BD: SELECT id, nombre_completo, ... FROM usuarios WHERE activo = TRUE
-        catalogoResponsables.addAll(List.of(
-                responsable(1L, "Gerardo", "Espíndola", "Ramírez", TipoUsuario.ADMINISTRADOR),
-                responsable(2L, "Luis Ángel", "Ortega", "Mendoza", TipoUsuario.TECNICO),
-                responsable(3L, "Karla", "Núñez", "Salinas", TipoUsuario.TECNICO),
-                responsable(4L, "Diego", "Salas", "Ibarra", TipoUsuario.TECNICO),
-                responsable(5L, "Ana Sofía", "Ramírez", "Cortés", TipoUsuario.CONSULTA),
-                responsable(6L, "Jorge", "Medina", "Aguilar", TipoUsuario.CONSULTA),
-                responsable(7L, "Mariana", "Beltrán", "Ochoa", TipoUsuario.ADMINISTRADOR),
-                responsable(11L, "Fernanda", "Zamora", "Ríos", TipoUsuario.TECNICO)));
-
-        // TODO BD: SELECT * FROM equipos
-        catalogoEquipos.addAll(List.of(
-                equipo(1L, "HP ProDesk 400 G7", "Laboratorio de Redes", "Intel Core i5-10500",
-                        "16GB", "512GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L),
-                equipo(2L, "Dell OptiPlex 3080", "Laboratorio de Redes", "Intel Core i5-10505",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 2L),
-                equipo(3L, "Lenovo ThinkCentre M75q", "Laboratorio de Software", "AMD Ryzen 5 4600GE",
-                        "16GB", "1TB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 3L),
-                equipo(4L, "HP EliteDesk 800 G4", "Laboratorio de Software", "Intel Core i7-8700",
-                        "32GB", "1TB SSD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 3L),
-                equipo(5L, "Dell Latitude 5420", "Dirección Académica", "Intel Core i7-1165G7",
-                        "16GB", "512GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 1L, 7L),
-                equipo(6L, "Lenovo ThinkPad E14", "Control Escolar", "AMD Ryzen 5 5500U",
-                        "8GB", "256GB SSD", (short) 2022, EstadoEquipo.ACTIVO, 2L, 6L),
-                equipo(7L, "HP ProDesk 600 G6", "Control Escolar", "Intel Core i5-10500",
-                        "8GB", "1TB HDD", (short) 2020, EstadoEquipo.INACTIVO, 2L, 6L),
-                equipo(8L, "Dell PowerEdge T40", "Site CGTI", "Intel Xeon E-2224G",
-                        "32GB", "2TB HDD", (short) 2020, EstadoEquipo.ACTIVO, 3L, 1L),
-                equipo(9L, "Acer Veriton X2660G", "Biblioteca", "Intel Core i3-9100",
-                        "8GB", "500GB HDD", (short) 2019, EstadoEquipo.EN_MANTENIMIENTO, 2L, 4L),
-                equipo(10L, "HP 280 Pro G6", "Biblioteca", "Intel Core i3-10100",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 1L, 4L),
-                equipo(11L, "Dell OptiPlex 7010", "Laboratorio de Cómputo 1", "Intel Core i5-3470",
-                        "4GB", "500GB HDD", (short) 2013, EstadoEquipo.DE_BAJA, 2L, null),
-                equipo(12L, "Lenovo ThinkCentre M720q", "Laboratorio de Cómputo 1", "Intel Core i5-9400T",
-                        "16GB", "512GB SSD", (short) 2020, EstadoEquipo.ACTIVO, 4L, 11L),
-                equipo(13L, "Apple MacBook Air M1", "Diseño Multimedia", "Apple M1",
-                        "8GB", "256GB SSD", (short) 2021, EstadoEquipo.ACTIVO, 7L, 5L),
-                equipo(14L, "HP Compaq Pro 6300", "Almacén CGTI", "Intel Core i3-3220",
-                        "4GB", "320GB HDD", (short) 2012, EstadoEquipo.DE_BAJA, null, null),
-                equipo(15L, "Dell Vostro 3681", "Recursos Humanos", "Intel Core i5-10400",
-                        "8GB", "1TB HDD", (short) 2021, EstadoEquipo.INACTIVO, 2L, 7L)));
-    }
-
-    private Equipo equipo(Long id, String modelo, String lugar, String procesador, String ram,
-            String almacenamiento, Short anio, EstadoEquipo estado, Long idSo, Long idResponsable) {
-
-        Equipo e = new Equipo();
-        e.setIdEquipo(id);
-        e.setModelo(modelo);
-        e.setLugar(lugar);
-        e.setProcesador(procesador);
-        e.setMemoriaRam(ram);
-        e.setAlmacenamiento(almacenamiento);
-        e.setAnioCreacion(anio);
-        e.setEstado(estado);
-        e.setIdSistemaOperativo(idSo);
-        e.setIdUsuarioResponsable(idResponsable);
-        return e;
-    }
-
-    private Usuario responsable(Long id, String nombre, String paterno, String materno, TipoUsuario tipo) {
-        Usuario u = new Usuario();
-        u.setIdUsuario(id);
-        u.setNombreCompleto(nombre);
-        u.setApellidoPaterno(paterno);
-        u.setApellidoMaterno(materno);
-        u.setTipoUsuario(tipo);
-        u.setActivo(true);
-        return u;
+        catalogoEquipos.clear();
+        catalogoEquipos.addAll(equipoRepository.obtenerTodos());
     }
 
     private static Equipo crearEquipoVacio() {
@@ -1072,89 +997,9 @@ public class PantallaMantenimientosController {
     // ============================================================
     // DATOS ESTÁTICOS (sustituir por la BD más adelante)
     // ============================================================
-    private void cargarDatosEstaticos() {
-        // TODO BD: SELECT id, id_equipo, fecha, motivo, tipo, fecha_proxima,
-        // mantenimiento_realizado FROM registros_mantenimiento ORDER BY fecha DESC
-        List<RegistroMantenimiento> demo = List.of(
-                crear(1L, 1L, LocalDateTime.of(2026, 1, 15, 9, 0), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza interna y cambio de pasta térmica",
-                        LocalDateTime.of(2026, 7, 15, 9, 0), true),
-                crear(2L, 1L, LocalDateTime.of(2026, 7, 20, 10, 30), TipoMantenimiento.CORRECTIVO,
-                        "El equipo se reinicia solo al abrir aplicaciones pesadas",
-                        LocalDateTime.of(2026, 9, 20, 9, 0), false),
-                crear(3L, 2L, LocalDateTime.of(2026, 2, 3, 11, 15), TipoMantenimiento.PREVENTIVO,
-                        "Mantenimiento preventivo semestral del laboratorio",
-                        LocalDateTime.of(2026, 8, 3, 9, 0), false),
-                crear(4L, 3L, LocalDateTime.of(2026, 3, 11, 8, 45), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza de ventiladores y revisión de disipadores",
-                        LocalDateTime.of(2026, 9, 11, 9, 0), false),
-                crear(5L, 4L, LocalDateTime.of(2026, 6, 5, 13, 0), TipoMantenimiento.CORRECTIVO,
-                        "No enciende, se sospecha de la fuente de poder",
-                        LocalDateTime.of(2026, 8, 5, 9, 0), false),
-                crear(6L, 4L, LocalDateTime.of(2026, 7, 28, 9, 20), TipoMantenimiento.CORRECTIVO,
-                        "Cambio de fuente de poder de 500W",
-                        null, true),
-                crear(7L, 5L, LocalDateTime.of(2026, 4, 18, 16, 10), TipoMantenimiento.PREVENTIVO,
-                        "Respaldo de información y depuración de archivos temporales",
-                        LocalDateTime.of(2026, 10, 18, 9, 0), false),
-                crear(8L, 6L, LocalDateTime.of(2026, 5, 22, 10, 0), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza de teclado y revisión de bisagras",
-                        LocalDateTime.of(2026, 11, 22, 9, 0), true),
-                crear(9L, 7L, LocalDateTime.of(2026, 1, 30, 14, 40), TipoMantenimiento.CORRECTIVO,
-                        "Disco duro con sectores dañados, se recomienda reemplazo",
-                        LocalDateTime.of(2026, 4, 30, 9, 0), false),
-                crear(10L, 8L, LocalDateTime.of(2026, 6, 12, 7, 30), TipoMantenimiento.PREVENTIVO,
-                        "Mantenimiento del servidor: limpieza y revisión de la UPS",
-                        LocalDateTime.of(2026, 12, 12, 9, 0), true),
-                crear(11L, 9L, LocalDateTime.of(2026, 7, 9, 12, 5), TipoMantenimiento.CORRECTIVO,
-                        "Pantalla sin señal, se cambió la tarjeta de video",
-                        LocalDateTime.of(2027, 1, 9, 9, 0), true),
-                crear(12L, 9L, LocalDateTime.of(2026, 8, 14, 9, 0), TipoMantenimiento.PREVENTIVO,
-                        "Revisión general posterior al cambio de tarjeta de video",
-                        LocalDateTime.of(2027, 2, 14, 9, 0), false),
-                crear(13L, 10L, LocalDateTime.of(2026, 3, 27, 15, 25), TipoMantenimiento.PREVENTIVO,
-                        "Desfragmentación y revisión del disco duro",
-                        LocalDateTime.of(2026, 9, 27, 9, 0), false),
-                crear(14L, 11L, LocalDateTime.of(2026, 2, 19, 11, 50), TipoMantenimiento.CORRECTIVO,
-                        "Equipo obsoleto, se propone darlo de baja",
-                        null, true),
-                crear(15L, 12L, LocalDateTime.of(2026, 5, 6, 8, 15), TipoMantenimiento.PREVENTIVO,
-                        "Actualización de BIOS y limpieza interna",
-                        LocalDateTime.of(2026, 11, 6, 9, 0), true),
-                crear(16L, 13L, LocalDateTime.of(2026, 7, 31, 17, 0), TipoMantenimiento.CORRECTIVO,
-                        "La batería no retiene carga, se solicita reemplazo",
-                        LocalDateTime.of(2026, 8, 10, 9, 0), false),
-                crear(17L, 15L, LocalDateTime.of(2026, 6, 24, 10, 45), TipoMantenimiento.PREVENTIVO,
-                        "Limpieza general y revisión de conexiones",
-                        LocalDateTime.of(2026, 12, 24, 9, 0), false),
-                crear(18L, 3L, LocalDateTime.of(2026, 8, 18, 9, 30), TipoMantenimiento.PREVENTIVO,
-                        "Mantenimiento programado del laboratorio de software",
-                        LocalDateTime.of(2027, 2, 18, 9, 0), false));
 
-        datos.setAll(demo);
-    }
-
-    private RegistroMantenimiento crear(Long id, Long idEquipo, LocalDateTime fecha,
-            TipoMantenimiento tipo, String motivo, LocalDateTime proxima, boolean realizado) {
-
-        RegistroMantenimiento m = new RegistroMantenimiento();
-        m.setIdMantenimiento(id);
-        m.setIdEquipo(idEquipo);
-        m.setFecha(Timestamp.valueOf(fecha));
-        m.setTipo(tipo);
-        m.setMotivo(motivo);
-        m.setFechaProxima(proxima == null ? null : Timestamp.valueOf(proxima));
-        m.setMantenimientoRealizado(realizado);
-        return m;
-    }
-
-    private Long siguienteId() {
-        long max = datos.stream()
-                .filter(m -> m.getIdMantenimiento() != null)
-                .mapToLong(RegistroMantenimiento::getIdMantenimiento)
-                .max()
-                .orElse(0L);
-        return max + 1;
+    private void cargarDatosDesdeBD() {
+        datos.setAll(mantenimientoRepository.obtenerTodos());
     }
 
     // ============================================================

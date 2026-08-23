@@ -33,6 +33,7 @@ C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\controller\PantallaMantenimientosController.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\RegistroMantenimiento.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\model\mantenimiento\TipoMantenimiento.java
+C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\MantenimientoModule\repository\MantenimientoRepository.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\services\EmailService.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\SistemasOperativosModule\controller\Pantallasistemasoperativoscontroller.java
 C:\Users\andre\OneDrive\Escritorio\GestorDeMantenimineto\src\main\java\com\utng\SistemasOperativosModule\repository\SistemaOperativoRepository.java
