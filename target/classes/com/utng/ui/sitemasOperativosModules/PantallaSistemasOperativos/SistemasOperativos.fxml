@@ -301,16 +301,16 @@
                        -fx-background-radius: 9; -fx-padding: 10 14 10 14; -fx-cursor: hand;"/>
 
         <HBox alignment="CENTER_LEFT" spacing="10"
-              style="-fx-border-color: #1e293b; -fx-border-width: 1 0 0 0; -fx-padding: 14 0 0 0;">
-            <Label text="GE"
-                   style="-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: white;
-                          -fx-background-color: #334155; -fx-background-radius: 14;
-                          -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
-            <VBox spacing="1">
-                <Label text="Gerardo" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label text="Técnico CGTI" style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
-            </VBox>
-        </HBox>
+      style="-fx-border-color: #1e293b; -fx-border-width: 1 0 0 0; -fx-padding: 14 0 0 0;">
+    <Label fx:id="lblAvatarUsuario" text="GE"
+           style="-fx-font-size: 10.5px; -fx-font-weight: bold; -fx-text-fill: white;
+                  -fx-background-color: #334155; -fx-background-radius: 14;
+                  -fx-min-width: 30; -fx-min-height: 30; -fx-alignment: center;"/>
+    <VBox spacing="1">
+        <Label fx:id="lblNombreUsuario" text="Gerardo" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+        <Label fx:id="lblRolUsuario" text="Técnico CGTI" style="-fx-font-size: 10px; -fx-text-fill: #94a3b8;"/>
+    </VBox>
+</HBox>
     </VBox>
 
 </StackPane>

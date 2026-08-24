@@ -21,6 +21,7 @@ import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
 import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.Usuario;
 import com.utng.util.Navigator;
+import com.utng.util.SesionManager;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -196,6 +197,9 @@ public class PantallaMantenimientosController {
     @FXML
     private VBox panelMenu;
 
+    @FXML
+    private Label lblAvatarUsuario, lblNombreUsuario, lblRolUsuario;
+
     // ============================================================
     // DATOS EN MEMORIA
     // ============================================================
@@ -219,9 +223,24 @@ public class PantallaMantenimientosController {
         configurarFiltros();
         refrescarCombosDeFiltro();
         aplicarFiltros();
+        configurarUsuarioSesion();
         cargarDatosDesdeBD();
         cargarEstadisticas();
         actualizarEstadoBotones();
+    }
+
+    private void configurarUsuarioSesion() {
+        String nombreCompleto = SesionManager.getInstance().getNombreCompleto();
+        lblNombreUsuario.setText(nombreCompleto);
+        lblRolUsuario.setText("Técnico CGTI"); // o el rol real si lo tienes en SesionManager
+        lblAvatarUsuario.setText(iniciales(nombreCompleto));
+    }
+
+    private String iniciales(String nombre) {
+        String[] p = nombre.trim().split("\\s+");
+        if (p.length == 1)
+            return p[0].substring(0, Math.min(2, p[0].length())).toUpperCase();
+        return ("" + p[0].charAt(0) + p[1].charAt(0)).toUpperCase();
     }
 
     // ============================================================

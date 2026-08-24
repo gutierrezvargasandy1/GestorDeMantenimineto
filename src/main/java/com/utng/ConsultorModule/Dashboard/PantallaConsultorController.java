@@ -23,11 +23,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,6 +37,10 @@ import org.bson.types.ObjectId;
 
 import com.utng.ConsultorModule.model.EquipoConsulta;
 import com.utng.ConsultorModule.model.TecnicoChat;
+import com.utng.EquipoModule.model.equipo.Equipo;
+import com.utng.EquipoModule.model.sistemaOperativo.SistemaOperativo;
+import com.utng.EquipoModule.repository.EquipoRepository;
+import com.utng.SistemasOperativosModule.repository.SistemaOperativoRepository;
 import com.utng.UserModule.UsuarioRepository;
 import com.utng.UserModule.model.usuario.TipoUsuario;
 import com.utng.UserModule.model.usuario.Usuario;
@@ -191,6 +195,16 @@ public class PantallaConsultorController {
     private FilteredList<EquipoConsulta> equiposFiltrados;
     private FilteredList<TecnicoChat> tecnicosFiltrados;
 
+    // ═══════════ REPOSITORIOS ═══════════
+    private final EquipoRepository equipoRepository = new EquipoRepository();
+    private final SistemaOperativoRepository sistemaOperativoRepository = new SistemaOperativoRepository();
+
+    // ═══════════ CATALOGOS (para resolver nombres) ═══════════
+    private final List<SistemaOperativo> catalogoSistemasOperativos = new ArrayList<>();
+    private final List<Usuario> catalogoUsuarios = new ArrayList<>();
+
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private String estadoSeleccionado = "TODOS";
 
     /** Equipo que el consultor adjunto al chat como contexto del reporte. */
@@ -224,17 +238,14 @@ public class PantallaConsultorController {
         configurarFecha();
         configurarTabla();
         configurarListaTecnicos();
-
-        cargarEquiposDemo(); // <-- equipos siguen demo hasta tener su repo aqui
-
+        cargarCatalogos();
+        cargarEquiposDesdeBD();
         configurarFiltros();
         actualizarKPIs();
         actualizarConteo();
         resaltarChip(chipTodos);
-
         btnEnviar.setDisable(true);
         txtMensaje.setDisable(true);
-
         lblNombreUsuario.setText(nombreConsultorSesion);
         lblRolUsuario.setText("Consultor CGTI");
         lblAvatarUsuario.setText(iniciales(nombreConsultorSesion));
@@ -860,47 +871,81 @@ public class PantallaConsultorController {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // DATOS DE EJEMPLO -> equipos siguen demo mientras no tengas
-    // EquipoRepository. Los tecnicos YA NO se cargan aqui (ver
-    // cargarTecnicosReales()).
+    // CARGA DE CATALOGOS Y EQUIPOS (BD REAL)
     // ══════════════════════════════════════════════════════════════
-    private void cargarEquiposDemo() {
-        equipos.addAll(
-                new EquipoConsulta(1, "PC-LAB-014", "HP ProDesk 400 G7", "Intel Core i5-10500",
-                        "8 GB", "512 GB SSD", "Windows 11 Pro", "Laboratorio A", "Activo",
-                        2021, "U-101 Gerardo E.", "2021-03-15", "2026-08-10"),
-                new EquipoConsulta(2, "PC-LAB-015", "Dell OptiPlex 3080", "Intel Core i3-10100",
-                        "8 GB", "256 GB SSD", "Windows 10 Pro", "Laboratorio A", "En mantenimiento",
-                        2021, "U-101 Gerardo E.", "2021-03-15", "2026-08-12"),
-                new EquipoConsulta(3, "PC-ADM-002", "Lenovo ThinkCentre M70q", "Intel Core i7-11700",
-                        "16 GB", "1 TB SSD", "Windows 11 Pro", "Administracion", "Activo",
-                        2022, "U-204 Marisol R.", "2022-07-01", "2026-06-30"),
-                new EquipoConsulta(4, "LAP-DOC-009", "Dell Latitude 5420", "Intel Core i5-1135G7",
-                        "16 GB", "512 GB SSD", "Windows 11 Pro", "Sala de docentes", "Activo",
-                        2022, "U-310 Luis M.", "2022-09-12", "2026-07-22"),
-                new EquipoConsulta(5, "PC-LAB-021", "HP EliteDesk 800 G6", "Intel Core i7-10700",
-                        "32 GB", "1 TB SSD", "Ubuntu 22.04 LTS", "Laboratorio B", "Activo",
-                        2023, "U-101 Gerardo E.", "2023-01-20", "2026-08-01"),
-                new EquipoConsulta(6, "PC-LAB-022", "HP EliteDesk 800 G6", "Intel Core i7-10700",
-                        "16 GB", "512 GB SSD", "Ubuntu 22.04 LTS", "Laboratorio B", "En mantenimiento",
-                        2023, "U-101 Gerardo E.", "2023-01-20", "2026-08-14"),
-                new EquipoConsulta(7, "PC-BIB-003", "Acer Veriton X2665G", "Intel Core i3-9100",
-                        "4 GB", "1 TB HDD", "Windows 10 Pro", "Biblioteca", "Inactivo",
-                        2019, "U-415 Ana T.", "2019-11-05", "2025-12-18"),
-                new EquipoConsulta(8, "PC-BIB-004", "Acer Veriton X2665G", "Intel Core i3-9100",
-                        "4 GB", "1 TB HDD", "Windows 10 Pro", "Biblioteca", "De baja",
-                        2019, "U-415 Ana T.", "2019-11-05", "2026-02-09"),
-                new EquipoConsulta(9, "LAP-DIR-001", "MacBook Air M2", "Apple M2",
-                        "16 GB", "512 GB SSD", "macOS Sonoma", "Direccion", "Activo",
-                        2024, "U-500 Direccion", "2024-02-28", "2026-08-05"),
-                new EquipoConsulta(10, "PC-CGTI-007", "Custom Workstation", "AMD Ryzen 7 5800X",
-                        "32 GB", "2 TB SSD", "Windows 11 Pro", "CGTI", "Activo",
-                        2024, "U-101 Gerardo E.", "2024-05-14", "2026-08-15"),
-                new EquipoConsulta(11, "PC-LAB-030", "Dell OptiPlex 7010", "Intel Core i5-13500",
-                        "16 GB", "512 GB SSD", "Windows 11 Pro", "Laboratorio C", "Activo",
-                        2025, "U-204 Marisol R.", "2025-08-19", "2026-08-11"),
-                new EquipoConsulta(12, "PC-LAB-031", "Dell OptiPlex 7010", "Intel Core i5-13500",
-                        "16 GB", "512 GB SSD", "Windows 11 Pro", "Laboratorio C", "De baja",
-                        2025, "U-204 Marisol R.", "2025-08-19", "2026-07-03"));
+    private void cargarCatalogos() {
+        catalogoSistemasOperativos.clear();
+        catalogoSistemasOperativos.addAll(sistemaOperativoRepository.obtenerTodos());
+
+        catalogoUsuarios.clear();
+        catalogoUsuarios.addAll(usuarioRepository.obtenerTodos());
     }
+
+    private void cargarEquiposDesdeBD() {
+        equipos.clear();
+        List<Equipo> equiposBD = equipoRepository.obtenerTodos();
+        for (Equipo e : equiposBD) {
+            equipos.add(convertir(e));
+        }
+    }
+
+    /** Convierte un Equipo real (BD) al modelo de solo lectura EquipoConsulta. */
+    private EquipoConsulta convertir(Equipo e) {
+        String nombreSO = nombreSistemaOperativo(e.getIdSistemaOperativo());
+        String responsable = nombreResponsable(e.getIdUsuarioResponsable());
+        String estado = e.getEstado() == null ? "Sin estado" : e.getEstado().getEtiqueta();
+
+        return new EquipoConsulta(
+                e.getIdEquipo() == null ? 0 : e.getIdEquipo().intValue(),
+                valorODash(e.getModelo()), // "equipos" (no hay codigo aparte, usamos el modelo)
+                valorODash(e.getModelo()), // "modelo"
+                valorODash(e.getProcesador()),
+                valorODash(e.getMemoriaRam()),
+                valorODash(e.getAlmacenamiento()),
+                nombreSO,
+                valorODash(e.getLugar()),
+                estado,
+                e.getAnioCreacion() == null ? 0 : e.getAnioCreacion(),
+                responsable,
+                formatearFecha(e.getFechaCreacion()),
+                formatearFecha(e.getFechaActualizacion()));
+    }
+
+    private String nombreSistemaOperativo(Long id) {
+        if (id == null) {
+            return "Sin S.O.";
+        }
+        return catalogoSistemasOperativos.stream()
+                .filter(so -> id.equals(so.getIdSistemaOperativo()))
+                .findFirst()
+                .map(SistemaOperativo::getDescripcion)
+                .orElse("Sin S.O.");
+    }
+
+    private String nombreResponsable(Long id) {
+        if (id == null) {
+            return "Sin asignar";
+        }
+        return catalogoUsuarios.stream()
+                .filter(u -> id.equals(u.getIdUsuario()))
+                .findFirst()
+                .map(this::nombreCompletoUsuario)
+                .orElse("Sin asignar");
+    }
+
+    private String nombreCompletoUsuario(Usuario u) {
+        if (u == null) {
+            return "Sin asignar";
+        }
+        return (valorODash(u.getNombreCompleto()) + " " + valorODash(u.getApellidoPaterno())).trim();
+    }
+
+    private static String formatearFecha(Timestamp fecha) {
+        return fecha == null ? "—" : fecha.toLocalDateTime().toLocalDate().format(FORMATO_FECHA);
+    }
+
+    private static String valorODash(String valor) {
+        return (valor == null || valor.isBlank()) ? "—" : valor;
+    }
+
 }
